@@ -45,8 +45,8 @@ function tick(t){
 	requestAnimationFrame(tick)
 	canvas.width = innerWidth * 2
 	canvas.height = innerHeight * 2
-	canvas.style.width = '100%'
-	canvas.style.height = '100%'
+	// canvas.style.width = '100%'
+	// canvas.style.height = '100%'
 	ctx.clearRect(0,0, canvas.width, canvas.height)
 
 
