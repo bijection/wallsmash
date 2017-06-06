@@ -3,8 +3,8 @@ const ctx = canvas.getContext('2d')
 const ball = {
 	x: innerWidth,
 	y: innerHeight,
-	vx:-100,
-	vy:-215,
+	vx:-1000,
+	vy:-1515,
 	r: 10
 }
 

@@ -7,6 +7,18 @@ body {
 
 h1 {
 	text-align: center;
+	margin: 0;
+	padding: 2% 0 0 0;
+}
+
+h2 {
+	margin: 0;
+	padding: 0 0 2% 0;
+	text-align: center;
+	color: gray;
+	font-size: 75%;
+	text-transform: uppercase;
+	 letter-spacing: 2px;
 }
 
 #canvas-parent {
