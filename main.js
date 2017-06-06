@@ -1,7 +1,7 @@
 const ctx = canvas.getContext('2d')
 
 let balls = []
-let playing = false
+let game_state = 'aiming'
 let num_balls = 40
 let mouse = {x:0, y:0}
 let ball_start_pos
@@ -34,7 +34,7 @@ function tick(t){
     render()
     update_positions(dt)
 
-    if(playing){
+    if(game_state === 'playing'){
         
         if(balls.length < num_balls) {
             const r = 10
@@ -53,27 +53,46 @@ function tick(t){
                 r
             })
         } else if(balls.every(ball => ball.done)) {
-            playing = false
+            game_state = 'gathering'
+            balls.forEach(ball => {
+                ball.vx = (ball_start_pos - ball.x) * (2 + Math.random())
+                ball.gather_dir = (ball_start_pos - ball.x) || 1
+            })
         }
 
+    } else if(game_state === 'gathering') {
+        balls.forEach(ball => {
+            // console.log(ball_start_pos, ball.x, ball.gather_dir)
+            const d = ball_start_pos - ball.x
+            if(Math.abs(d) < 1e-8 || d / ball.gather_dir < 0) {
+                ball.x = ball_start_pos
+                ball.vx = 0
+                ball.gathered = true
+                // console.log('gathered', ball)
+            }
+        })
+        if(balls.every(ball => ball.gathered)) {
+            balls = []
+            game_state = 'aiming'
+        }
     }
 }
 
 function keyPressed(evt) {
     if (evt.keyCode == 32) {
-        spaceBarPressed();
+        shoot();
     }
 }
 
-function spaceBarPressed() {
-    if(!playing){
-        playing = true
+function shoot() {
+    if(game_state === 'aiming'){
         balls = []
+        game_state = 'playing'
     }
 }
 
 document.addEventListener('mousemove', e => {
-    if(playing) return;
+    if(game_state != 'aiming') return;
     var rect = canvas.getBoundingClientRect();
     mouse = {
         x: (e.clientX - rect.left) * 2,
@@ -81,6 +100,7 @@ document.addEventListener('mousemove', e => {
     }
 })
 document.addEventListener('keydown', keyPressed, true);
+document.addEventListener('mousedown', shoot, true);
 
 
 
@@ -101,7 +121,7 @@ function render(){
     //launcher
 
     //if balls can be launched, display line between bottomcenter and mouse 
-    if (!playing) {
+    if (game_state === 'aiming') {
         ctx.arc(launcher_x, canvas.height - 10, 10, 0, Math.PI * 2)
         ctx.fill()
 
