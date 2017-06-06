@@ -20,8 +20,8 @@ h1 {
 	height: 75vh;
 }
 
-@media only screen and (max-device-width: 700px) {
+@media (max-width: 700px) {
 	#canvas {
-		width: 100vw;
+		width: 99vw;
 	}
 }
