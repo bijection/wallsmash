@@ -35,9 +35,11 @@ function tick(t){
     ctx.clearRect(0,0, canvas.width, canvas.height)
 
 
-    render()
+    // ctx.setTransform(1, 0, 0, 1, 0, 0);
+
     update_ball_positions(dt)
     update_particles(dt)
+    render()
 
     if(game_state === 'playing'){
         
@@ -111,7 +113,6 @@ document.addEventListener('mousedown', shoot, true);
 
 
 function render(){
-    ctx.beginPath()
 
 
     //loop through all balls
@@ -128,27 +129,30 @@ function render(){
 
     //if balls can be launched, display line between bottomcenter and mouse 
     if (game_state === 'aiming') {
-        ctx.arc(launcher_x, canvas.height - 10, 10, 0, Math.PI * 2)
-        ctx.fill()
 
         ctx.save();
+        ctx.strokeStyle = '#aaa'
         ctx.beginPath();
         ctx.setLineDash([5, 15]);
         ctx.lineWidth=5;
         ctx.moveTo(launcher_x, canvas.height - 10);
         ctx.lineTo(mouse.x, mouse.y);
-        ctx.stroke();
-        ctx.restore();
+        ctx.stroke()
+        ctx.restore()
+
+        ctx.beginPath()
+        ctx.arc(launcher_x, canvas.height - 10, 10, 0, Math.PI * 2)
+        ctx.fill()
     }
 
 
-    cells.forEach(cell => {
-
+    function drawcell(cell, bang){
         const [r,c,num] = cell
 
         if(!num) return;
 
         const { w,h, x,y} = get_cell_rect(r,c)
+        if(bang) ctx.translate((Math.random() - .5)*4, (Math.random() - .5)*4);
 
         ctx.fillStyle = 'rgba(' + gradient('yiorrd', 1-(num / 32)) + ',1)'
         ctx.fillRect(w*c , h*r , w,h)
@@ -160,8 +164,13 @@ function render(){
         ctx.fillText(num, w*(c+.5), h*(r+.5)+2)
         ctx.fillStyle = 'white';
         ctx.fillText(num, w*(c+.5), h*(r+.5))
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
 
-    })
+    cells.forEach(c => drawcell(c))
+    cells.filter(cell=>cell.hit).forEach(c => drawcell(c, true))
+
+
 
     particles.forEach(({x,y,r, age, lifetime}) => {
         const alpha = (1 - age/lifetime)
@@ -176,6 +185,7 @@ function render(){
 
 
 function update_ball_positions(dt){
+    cells.forEach(cell => cell.hit = false)
 
     balls.forEach(ball => {
         const total_displacement_x = ball.vx * dt
@@ -208,8 +218,10 @@ function update_ball_positions(dt){
                 if(!b) return;
 
                 cell[2]--
+                cell.hit = true
 
-                for (var i = 0; i < 10; i++) {
+                // reset current transformation matrix to the identity matrix
+                for (var i = 0; i < 0; i++) {
                     
                     const a = Math.random()*Math.PI*2
 
