@@ -107,7 +107,12 @@ function tick(t){
         })
         if(balls.every(ball => ball.gathered)) {
             balls = []
+
+            //update to next level
+            currentLevel++;
             updateCellsForCurrentLevel()
+
+            //change game state
             game_state = 'aiming'
         }
     }
