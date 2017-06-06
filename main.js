@@ -5,6 +5,7 @@ let game_state = 'aiming'
 let num_balls = 40
 let mouse = {x:0, y:0}
 let ball_start_pos
+let particles = []
 
 const level = `..........
 ....888...
@@ -19,9 +20,12 @@ level
 .split('')
 .forEach((char, col) => cells.push([row, col, Number(char) *4 || 0 ])))
 
+let frame_number = 0
 
 function tick(t){
+    frame_number++
     const dt = (t - last) / 1000
+
     last = t
     requestAnimationFrame(tick)
 
@@ -32,7 +36,8 @@ function tick(t){
 
 
     render()
-    update_positions(dt)
+    update_ball_positions(dt)
+    update_particles(dt)
 
     if(game_state === 'playing'){
         
@@ -144,17 +149,31 @@ function render(){
 
         const { w,h, x,y} = get_cell_rect(r,c)
 
-        ctx.strokeRect(w*c , h*r , w,h)
+
+        ctx.fillStyle = 'rgba(' + gradient('yiorrd', 1-(num / 32)) + ',1)'
+        ctx.fillRect(w*c , h*r , w,h)
+
+        ctx.fillStyle = 'rgba(0,0,0,.5)'
         ctx.textBaseline = 'middle' 
         ctx.textAlign = 'center' 
         ctx.font = '40px Avenir'
         ctx.fillText(num, w*(c+.5), h*(r+.5))
 
     })
+
+    particles.forEach(({x,y,r, age, lifetime}) => {
+        const alpha = (1 - age/lifetime)
+        ctx.fillStyle = 'rgba(' + gradient('hotish', 1-alpha) + ',' + alpha / 3 + ')'
+        ctx.beginPath()
+        ctx.arc(x, y, r, 0, Math.PI * 2)
+        ctx.fill()        
+    })
+    ctx.fillStyle = 'black'
+
 }
 
 
-function update_positions(dt){
+function update_ball_positions(dt){
 
     balls.forEach(ball => {
         const total_displacement_x = ball.vx * dt
@@ -186,7 +205,32 @@ function update_positions(dt){
 
                 if(!b) return;
 
-                cell[2] --
+                cell[2]--
+
+                for (var i = 0; i < 10; i++) {
+                    
+                    const a = Math.random()*Math.PI*2
+
+                    const v = Math.random()
+
+                    const dx = Math.cos(a)
+                    const dy = Math.sin(a)
+
+                    particles.push({
+                        age: 0,
+                        x: ball.x,
+                        y: ball.y,
+                        r: 1,
+                        vx: dx * 1000 *v,
+                        vy: dy * 1000 *v,
+                        vr: 30,
+                        ax: 0,
+                        ay: 0,
+                        ar: 0,
+                        f: .1,
+                        lifetime: 1
+                    })
+                }
 
                 let [bx, by, d] = b
 
@@ -224,7 +268,6 @@ function update_positions(dt){
 
 
         while(total_displacement - partial_displacement > 10 && !creep(10)){
-
             partial_displacement += 10
         }
 
@@ -260,8 +303,31 @@ function update_positions(dt){
 }
 
 
-function bounce (rect, circle)
-{
+
+function update_particles(dt){
+    const new_particles = []
+    particles.forEach(p => {
+        if(p.age > p.lifetime) return;
+
+        p.vx += p.ax * dt
+        p.vy += p.ay * dt
+        p.vx *= (1 - p.f)
+        p.vy *= (1 - p.f)
+        p.vr += p.ar * dt
+        p.x += p.vx * dt
+        p.y += p.vy * dt
+        p.r += p.vr * dt
+
+        if(p.r < 0) return;
+        p.age += dt
+        new_particles.push(p)
+    })
+    particles = new_particles
+}
+
+
+
+function bounce (rect, circle) {
     // compute a c2c-to-c2c vector
     var half = { x: rect.w/2, y: rect.h/2 };
     var c2c = {
