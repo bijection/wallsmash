@@ -149,14 +149,15 @@ function render(){
 
         const { w,h, x,y} = get_cell_rect(r,c)
 
-
         ctx.fillStyle = 'rgba(' + gradient('yiorrd', 1-(num / 32)) + ',1)'
         ctx.fillRect(w*c , h*r , w,h)
 
-        ctx.fillStyle = 'rgba(0,0,0,.5)'
         ctx.textBaseline = 'middle' 
         ctx.textAlign = 'center' 
         ctx.font = '40px Avenir'
+        ctx.fillStyle = 'black';
+        ctx.fillText(num, w*(c+.5), h*(r+.5)+2)
+        ctx.fillStyle = 'white';
         ctx.fillText(num, w*(c+.5), h*(r+.5))
 
     })
