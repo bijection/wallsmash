@@ -33,10 +33,10 @@ function render(){
     cells.forEach(cell => {
 
     	const [r,c,num] = cell
-    	const w = 100, h = 100
-
 
     	if(!num) return;
+
+    	const { w,h, x,y} = get_cell_rect(r,c)
 
         ctx.strokeRect(w*c , h*r , w,h)
         ctx.font = '40px times'
@@ -50,6 +50,11 @@ const level = `..........
 ....888...
 .8.88888..
 ...88..88.`
+
+function get_cell_rect(r,c){
+	const w = canvas.width / 10, h = 100
+	return { w,h, x: w*c, y: h*r}
+}
 
 const cells = [] 
 
@@ -154,12 +159,10 @@ function tick(t){
 		    cells.forEach(cell => {
 
 		    	const [r,c,num] = cell
-		    	const w = 100, h = 100
-
 
 		    	if(!num) return;
 
-		        let b = bounce({ w,h, x: w*c, y: h*r}, ball)
+		        let b = bounce(get_cell_rect(r,c), ball)
 
 		        if(!b) return;
 
