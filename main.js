@@ -3,8 +3,8 @@ const ctx = canvas.getContext('2d')
 const ball = {
 	x: innerWidth,
 	y: innerHeight,
-	vx:-100,
-	vy:-215,
+	vx:-1000,
+	vy:-2150,
 	r: 10
 }
 
@@ -110,52 +110,74 @@ function tick(t){
 
 
   	// console.log(cells)
+  	const total_displacement_x = ball.vx * dt
+  	const total_displacement_y = ball.vy * dt
+  	const total_displacement = Math.sqrt(total_displacement_y*total_displacement_y + total_displacement_x*total_displacement_x)
 
-    cells.forEach(cell => {
-
-    	const [r,c,num] = cell
-    	const w = 100, h = 100
+  	let partial_displacement = 0
 
 
-    	if(!num) return;
-        ctx.strokeRect(w*c , h*r , w,h)
+  	function creep(x, y){
+		ball.x+=x
+		ball.y+=y
 
-        let b = bounce({ w,h, x: w*c, y: h*r}, ball)
+	    cells.forEach(cell => {
 
-        if(!b) return;
+	    	const [r,c,num] = cell
+	    	const w = 100, h = 100
 
-        let [bx, by, d] = b
 
-        var normal_len = bx*ball.vx + by*ball.vy
+	    	if(!num) return;
+	        ctx.strokeRect(w*c , h*r , w,h)
 
-        let nx = bx*normal_len, ny = by*normal_len
-        let amt = 1+1
-        
-        abx -= amt*nx
-        aby -= amt*ny
+	        let b = bounce({ w,h, x: w*c, y: h*r}, ball)
 
-        vhits++
+	        if(!b) return;
 
-        let amt2 = ball.r - d
-        if(amt2 > 0){
-            ball.x += amt2*bx
-            ball.y += amt2*by
-            dhits++
-        }
-    })
+	        cell[2] --
 
-    if(vhits > 0){
-        ball.vx += abx/vhits
-        ball.vy += aby/vhits
-    }
+	        let [bx, by, d] = b
 
-    if(dhits > 0){
-        ball.x += adx
-        ball.y += ady
-    }
+	        var normal_len = bx*ball.vx + by*ball.vy
 
-	ball.x+=ball.vx * dt
-	ball.y+=ball.vy * dt
+	        let nx = bx*normal_len, ny = by*normal_len
+	        let amt = 1+1
+	        
+	        abx -= amt*nx
+	        aby -= amt*ny
+
+	        vhits++
+
+	        let amt2 = ball.r - d
+	        if(amt2 > 0){
+	            ball.x += amt2*bx
+	            ball.y += amt2*by
+	            dhits++
+	        }
+	    })
+
+	    if(vhits > 0){
+	        ball.vx += abx/vhits
+	        ball.vy += aby/vhits
+	    }
+
+	    if(dhits > 0){
+	        ball.x += adx
+	        ball.y += ady
+	    }
+  	}
+
+
+
+  	while(total_displacement - partial_displacement > 10){
+
+  		partial_displacement += 10
+
+  		creep(total_displacement_x / total_displacement * 10, total_displacement_y / total_displacement * 10)
+
+  	}
+
+	creep(total_displacement_x / total_displacement * (total_displacement - partial_displacement), total_displacement_y / total_displacement * (total_displacement - partial_displacement))
 
 	if(ball.x > canvas.width - ball.r) {
 		ball.x = canvas.width - ball.r
@@ -173,7 +195,6 @@ function tick(t){
 		ball.y = ball.r
 		ball.vy *= -1
 	}
-
 }
 
 let last
