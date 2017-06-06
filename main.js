@@ -8,26 +8,39 @@ const ball = {
 	r: 10
 }
 
+balls = []
+
 function render(){
 	ctx.beginPath()
 
 	//single ball
-	ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2)
+	//ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2)
+	//ctx.fill()
+
+	//loop through all balls
+	for (var i=0; i < balls.length; i++) {
+		tempBall = balls[i]
+		ctx.arc(tempBall.x, tempBall.y, tempBall.r, 0, Math.PI * 2)
+	}
 	ctx.fill()
 
 	//launcher
 	ctx.arc(bottomCenter.x, bottomCenter.y, 50, 0, Math.PI * 2)
 	ctx.fill()
 
-	//line between bottomCenter and mouse cursor
-	ctx.save();
-	ctx.beginPath();
-	ctx.setLineDash([5, 15]);
-	ctx.lineWidth=5;
-	ctx.moveTo(bottomCenter.x, bottomCenter.y);
-	ctx.lineTo(mouseCoord.x, mouseCoord.y);
-	ctx.stroke();
-	ctx.restore();
+	//if balls can be launched, display line between bottomcenter and mouse 
+	if (canLaunch) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.setLineDash([5, 15]);
+		ctx.lineWidth=5;
+		ctx.moveTo(bottomCenter.x, bottomCenter.y);
+		ctx.lineTo(mouseCoord.x, mouseCoord.y);
+		ctx.stroke();
+		ctx.restore();
+	}
+
+	
 }
 
 
@@ -46,6 +59,7 @@ level
 
 bottomCenter = {x: innerWidth, y:innerHeight*2}
 mouseCoord = {x:0, y:0}
+canLaunch = true
 
 function bounce (rect, circle)
 {
@@ -211,16 +225,30 @@ function tick(t){
 	}
 }
 
-
 //moves launch-line as the cursor moves
 //TODO: this mouse coordinate is definietly wrong. fix for better controls
-canvas.addEventListener('mousemove', function(evt) {
+function mouseMoved(evt) {
 	var rect = canvas.getBoundingClientRect();
 	mouseCoord = {
 		x: evt.clientX*2.0,
 		y: evt.clientY*2.0
 	};
-}, false);
+}
+
+function keyPressed(evt) {
+	if (evt.keyCode == 32) {
+		spaceBarPressed();
+	}
+}
+
+function spaceBarPressed() {
+	balls.push(ball)
+	
+}
+
+document.addEventListener('mousemove', mouseMoved, false);
+document.addEventListener('keydown', keyPressed, true);
+
 
 
 let last
