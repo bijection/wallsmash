@@ -1,31 +1,20 @@
 const ctx = canvas.getContext('2d')
 
-const ball = {
-	x: innerWidth,
-	y: innerHeight,
-	vx:-1000,
-	vy:-2150,
-	r: 10
-}
-
-balls = []
+const balls = []
 
 function render(){
 	ctx.beginPath()
 
-	//single ball
-	//ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2)
-	//ctx.fill()
 
 	//loop through all balls
-	for (var i=0; i < balls.length; i++) {
-		tempBall = balls[i]
-		ctx.arc(tempBall.x, tempBall.y, tempBall.r, 0, Math.PI * 2)
-	}
-	ctx.fill()
+	balls.forEach(({x,y,r}) => {
+		ctx.beginPath()
+		ctx.arc(x, y, r, 0, Math.PI * 2)
+		ctx.fill()
+	})
 
 	//launcher
-	ctx.arc(bottomCenter.x, bottomCenter.y, 50, 0, Math.PI * 2)
+	ctx.arc(canvas.width / 2, canvas.height, 50, 0, Math.PI * 2)
 	ctx.fill()
 
 	//if balls can be launched, display line between bottomcenter and mouse 
@@ -34,20 +23,33 @@ function render(){
 		ctx.beginPath();
 		ctx.setLineDash([5, 15]);
 		ctx.lineWidth=5;
-		ctx.moveTo(bottomCenter.x, bottomCenter.y);
+		ctx.moveTo(canvas.width / 2, canvas.height);
 		ctx.lineTo(mouseCoord.x, mouseCoord.y);
 		ctx.stroke();
 		ctx.restore();
 	}
 
-	
+
+    cells.forEach(cell => {
+
+    	const [r,c,num] = cell
+    	const w = 100, h = 100
+
+
+    	if(!num) return;
+
+        ctx.strokeRect(w*c , h*r , w,h)
+        ctx.font = '40px times'
+        ctx.fillText(num, w*(c+.5), h*(r+.5))
+
+	})
 }
 
 
 const level = `..........
-....222...
-.2.22222..
-...22..22.`
+....888...
+.8.88888..
+...88..88.`
 
 const cells = [] 
 
@@ -57,7 +59,6 @@ level
     	.split('')
     	.forEach((char, col) => cells.push([row, col, Number(char) || 0 ])))
 
-bottomCenter = {x: innerWidth, y:innerHeight*2}
 mouseCoord = {x:0, y:0}
 canLaunch = true
 
@@ -130,101 +131,101 @@ function tick(t){
 
 
   	// console.log(cells)
-  	const total_displacement_x = ball.vx * dt
-  	const total_displacement_y = ball.vy * dt
-  	const total_displacement = Math.sqrt(total_displacement_y*total_displacement_y + total_displacement_x*total_displacement_x)
+  	balls.forEach(ball => {
+	  	const total_displacement_x = ball.vx * dt
+	  	const total_displacement_y = ball.vy * dt
+	  	const total_displacement = Math.sqrt(total_displacement_y*total_displacement_y + total_displacement_x*total_displacement_x)
 
-  	let partial_displacement = 0
-
-
-  	function creep(displacement){
-		ball.x+= total_displacement_x / total_displacement * displacement
-		ball.y+= total_displacement_y / total_displacement * displacement
-
-		let hit = false
-
-	    let abx = 0, aby = 0
-	    let adx = 0, ady = 0
-
-	    let vhits = 0
-	    let dhits = 0
-
-	    cells.forEach(cell => {
-
-	    	const [r,c,num] = cell
-	    	const w = 100, h = 100
+	  	let partial_displacement = 0
 
 
-	    	if(!num) return;
-	        ctx.strokeRect(w*c , h*r , w,h)
-	        ctx.font = '40px times'
-	        ctx.fillText(num, w*(c+.5), h*(r+.5))
+	  	function creep(displacement){
+			ball.x+= total_displacement_x / total_displacement * displacement
+			ball.y+= total_displacement_y / total_displacement * displacement
 
-	        let b = bounce({ w,h, x: w*c, y: h*r}, ball)
+			let hit = false
 
-	        if(!b) return;
+		    let abx = 0, aby = 0
+		    let adx = 0, ady = 0
 
-	        cell[2] --
+		    let vhits = 0
+		    let dhits = 0
 
-	        let [bx, by, d] = b
+		    cells.forEach(cell => {
 
-	        var normal_len = bx*ball.vx + by*ball.vy
+		    	const [r,c,num] = cell
+		    	const w = 100, h = 100
 
-	        let nx = bx*normal_len, ny = by*normal_len
-	        let amt = 1+1
-	        
-	        abx -= amt*nx
-	        aby -= amt*ny
 
-	        vhits++
+		    	if(!num) return;
 
-	        let amt2 = ball.r - d
-	        if(amt2 > 0){
-	            adx += amt2*bx
-	            ady += amt2*by
-	            dhits++
-	        }
-	    })
+		        let b = bounce({ w,h, x: w*c, y: h*r}, ball)
 
-	    if(vhits > 0){
-	        ball.vx += abx/vhits
-	        ball.vy += aby/vhits
-	    }
+		        if(!b) return;
 
-	    if(dhits > 0){
-	        ball.x += adx / dhits
-	        ball.y += ady / dhits
-	    }
+		        cell[2] --
 
-	    return vhits > 0 || dhits > 0
-  	}
+		        let [bx, by, d] = b
+
+		        var normal_len = bx*ball.vx + by*ball.vy
+
+		        let nx = bx*normal_len, ny = by*normal_len
+		        let amt = 1+1
+		        
+		        abx -= amt*nx
+		        aby -= amt*ny
+
+		        vhits++
+
+		        let amt2 = ball.r - d
+		        if(amt2 > 0){
+		            adx += amt2*bx
+		            ady += amt2*by
+		            dhits++
+		        }
+		    })
+
+		    if(vhits > 0){
+		        ball.vx += abx/vhits
+		        ball.vy += aby/vhits
+		    }
+
+		    if(dhits > 0){
+		        ball.x += adx / dhits
+		        ball.y += ady / dhits
+		    }
+
+		    return vhits > 0 || dhits > 0
+	  	}
 
 
 
-  	while(total_displacement - partial_displacement > 10 && !creep(10)){
+	  	while(total_displacement - partial_displacement > 10 && !creep(10)){
 
-  		partial_displacement += 10
+	  		partial_displacement += 10
 
-  	}
+	  	}
 
-	if(total_displacement - partial_displacement <= 10) creep(total_displacement - partial_displacement)
+		if(total_displacement - partial_displacement <= 10) creep(total_displacement - partial_displacement)
 
-	if(ball.x > canvas.width - ball.r) {
-		ball.x = canvas.width - ball.r
-		ball.vx *= -1
-	}
-	if(ball.x < ball.r) {
-		ball.x = ball.r
-		ball.vx *= -1
-	}
-	if(ball.y > canvas.height - ball.r) {
-		ball.y = canvas.height - ball.r
-		ball.vy *= -1
-	}
-	if(ball.y < ball.r) {
-		ball.y = ball.r
-		ball.vy *= -1
-	}
+		if(ball.x > canvas.width - ball.r) {
+			ball.x = canvas.width - ball.r
+			ball.vx *= -1
+		}
+		if(ball.x < ball.r) {
+			ball.x = ball.r
+			ball.vx *= -1
+		}
+		if(ball.y > canvas.height - ball.r) {
+			ball.y = canvas.height - ball.r
+			ball.vy *= -1
+		}
+		if(ball.y < ball.r) {
+			ball.y = ball.r
+			ball.vy *= -1
+		}
+  	})
+
 }
 
 //moves launch-line as the cursor moves
@@ -244,8 +245,13 @@ function keyPressed(evt) {
 }
 
 function spaceBarPressed() {
-	balls.push(ball)
-	
+	balls.push({
+		x: innerWidth,
+		y: innerHeight,
+		vx:-1000,
+		vy:-2150,
+		r: 10
+	})
 }
 
 document.addEventListener('mousemove', mouseMoved, false);
