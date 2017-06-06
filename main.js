@@ -7,6 +7,8 @@ let mouse = {x:0, y:0}
 let ball_start_pos
 let particles = []
 
+let currentLevel = 33
+
 const level = `..........
 ....888...
 .8.88888..
@@ -21,6 +23,31 @@ level
 .forEach((char, col) => cells.push([row, col, Number(char) *4 || 0 ])))
 
 let frame_number = 0
+
+function updateCellsForCurrentLevel() {
+
+    //Shift each cell down one
+    for (i=0; i<cells.length;i++) {
+        let currentCell = cells[i];
+        currentCell[0] += 1;
+    }
+
+    //create new row
+    let numPossibleBricks = 10;
+    let chanceOfBrick = 0.5;
+    for (i=0; i<numPossibleBricks; i++) {
+        let shouldAddBrick = Math.random() <= chanceOfBrick;
+        let tempRow = 0;
+        let tempCol = i;
+        let tempVal = 0;
+        if (shouldAddBrick) {
+            tempVal = currentLevel;
+        }
+        newCell = [tempRow, tempCol, tempVal];
+        console.log(newCell)
+        cells.push(newCell);
+    }
+}
 
 function tick(t){
     frame_number++
@@ -80,6 +107,7 @@ function tick(t){
         })
         if(balls.every(ball => ball.gathered)) {
             balls = []
+            updateCellsForCurrentLevel()
             game_state = 'aiming'
         }
     }
