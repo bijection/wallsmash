@@ -22,6 +22,6 @@ h1 {
 
 @media (max-width: 700px) {
 	#canvas {
-		width: 99vw;
+		width: 100vw;
 	}
 }
