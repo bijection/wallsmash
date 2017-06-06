@@ -39,7 +39,9 @@ function render(){
     	const { w,h, x,y} = get_cell_rect(r,c)
 
         ctx.strokeRect(w*c , h*r , w,h)
-        ctx.font = '40px times'
+        ctx.textBaseline = 'middle' 
+        ctx.textAlign = 'center' 
+        ctx.font = '40px Avenir'
         ctx.fillText(num, w*(c+.5), h*(r+.5))
 
 	})
@@ -62,7 +64,7 @@ level
     .split('\n')
     .map((k, row) => k
     	.split('')
-    	.forEach((char, col) => cells.push([row, col, Number(char) || 0 ])))
+    	.forEach((char, col) => cells.push([row, col, Number(char) *4 || 0 ])))
 
 mouseCoord = {x:0, y:0}
 canLaunch = true
