@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		
+		<meta name="viewport" content="width=device-width">
+		<meta name="viewport" content="initial-scale=1.0">
+		<meta name = "viewport" content = "user-scalable=no, width=device-width">
+		<link rel="stylesheet" type="text/css" href="index.css">
+		<title>GKC</title>
 	</head>
 	<body>
 		<h1>GKC</h1>
@@ -31,7 +35,14 @@
 
 	#canvas {
 		border: 1px solid black;
-		width: 75vw;height: 75vh;
+		width: 75vw;
+		height: 75vh;
+	}
+
+	@media only screen and (max-device-width: 700px) {
+		#canvas {
+			width: 100vw;
+		}
 	}
 
 </style>
