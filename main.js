@@ -53,8 +53,8 @@ function tick(t){
             balls.push({
                 x,
                 y,
-                vx:dx / d * 1000,
-                vy:dy / d * 1000,
+                vx:dx / d * 1200,
+                vy:dy / d * 1200,
                 r
             })
         } else if(balls.every(ball => ball.done)) {
@@ -115,6 +115,7 @@ function render(){
 
 
     //loop through all balls
+    ctx.fillStyle = '#48f'
     balls.forEach(({x,y,r}) => {
         ctx.beginPath()
         ctx.arc(x, y, r, 0, Math.PI * 2)
