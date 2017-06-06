@@ -145,9 +145,19 @@ function render(){
         const { w,h, x,y} = get_cell_rect(r,c)
 
         ctx.strokeRect(w*c , h*r , w,h)
+        if (num > 21) {
+            ctx.fillStyle="#ef3e1e";   
+        } else if (num > 10) {
+            ctx.fillStyle="#f69b2c";
+        } else {
+            ctx.fillStyle="#fef56f";
+        }
+
+        ctx.fillRect(w*c, h*r, w, h)
         ctx.textBaseline = 'middle' 
         ctx.textAlign = 'center' 
         ctx.font = '40px Avenir'
+        ctx.fillStyle = 'white';
         ctx.fillText(num, w*(c+.5), h*(r+.5))
 
     })
