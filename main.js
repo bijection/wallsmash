@@ -10,14 +10,30 @@ const ball = {
 
 function render(){
 	ctx.beginPath()
+
+	//single ball
 	ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2)
 	ctx.fill()
+
+	//launcher
+	ctx.arc(bottomCenter.x, bottomCenter.y, 50, 0, Math.PI * 2)
+	ctx.fill()
+
+	//line between bottomCenter and mouse cursor
+	ctx.save();
+	ctx.beginPath();
+	ctx.setLineDash([5, 15]);
+	ctx.lineWidth=5;
+	ctx.moveTo(bottomCenter.x, bottomCenter.y);
+	ctx.lineTo(mouseCoord.x, mouseCoord.y);
+	ctx.stroke();
+	ctx.restore();
 }
 
 
 const level = `..........
 ....222...
-.8.22222..
+.2.22222..
 ...22..22.`
 
 const cells = [] 
@@ -28,8 +44,8 @@ level
     	.split('')
     	.forEach((char, col) => cells.push([row, col, Number(char) || 0 ])))
 
-
-
+bottomCenter = {x: innerWidth, y:innerHeight*2}
+mouseCoord = {x:0, y:0}
 
 function bounce (rect, circle)
 {
@@ -93,8 +109,6 @@ function tick(t){
 	requestAnimationFrame(tick)
 	canvas.width = innerWidth * 2
 	canvas.height = innerHeight * 2
-	// canvas.style.width = '100%'
-	// canvas.style.height = '100%'
 	ctx.clearRect(0,0, canvas.width, canvas.height)
 
 
@@ -196,6 +210,18 @@ function tick(t){
 		ball.vy *= -1
 	}
 }
+
+
+//moves launch-line as the cursor moves
+//TODO: this mouse coordinate is definietly wrong. fix for better controls
+canvas.addEventListener('mousemove', function(evt) {
+	var rect = canvas.getBoundingClientRect();
+	mouseCoord = {
+		x: evt.clientX*2.0,
+		y: evt.clientY*2.0
+	};
+}, false);
+
 
 let last
 
