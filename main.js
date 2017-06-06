@@ -129,14 +129,6 @@ function tick(t){
 	render()
 
 
-
-    let abx = 0, aby = 0
-    let adx = 0, ady = 0
-
-    let vhits = 0
-    let dhits = 0
-
-
   	// console.log(cells)
   	const total_displacement_x = ball.vx * dt
   	const total_displacement_y = ball.vy * dt
@@ -145,9 +137,17 @@ function tick(t){
   	let partial_displacement = 0
 
 
-  	function creep(x, y){
-		ball.x+=x
-		ball.y+=y
+  	function creep(displacement){
+		ball.x+= total_displacement_x / total_displacement * displacement
+		ball.y+= total_displacement_y / total_displacement * displacement
+
+		let hit = false
+
+	    let abx = 0, aby = 0
+	    let adx = 0, ady = 0
+
+	    let vhits = 0
+	    let dhits = 0
 
 	    cells.forEach(cell => {
 
@@ -157,6 +157,8 @@ function tick(t){
 
 	    	if(!num) return;
 	        ctx.strokeRect(w*c , h*r , w,h)
+	        ctx.font = '40px times'
+	        ctx.fillText(num, w*(c+.5), h*(r+.5))
 
 	        let b = bounce({ w,h, x: w*c, y: h*r}, ball)
 
@@ -178,8 +180,8 @@ function tick(t){
 
 	        let amt2 = ball.r - d
 	        if(amt2 > 0){
-	            ball.x += amt2*bx
-	            ball.y += amt2*by
+	            adx += amt2*bx
+	            ady += amt2*by
 	            dhits++
 	        }
 	    })
@@ -190,22 +192,22 @@ function tick(t){
 	    }
 
 	    if(dhits > 0){
-	        ball.x += adx
-	        ball.y += ady
+	        ball.x += adx / dhits
+	        ball.y += ady / dhits
 	    }
+
+	    return vhits > 0 || dhits > 0
   	}
 
 
 
-  	while(total_displacement - partial_displacement > 10){
+  	while(total_displacement - partial_displacement > 10 && !creep(10)){
 
   		partial_displacement += 10
 
-  		creep(total_displacement_x / total_displacement * 10, total_displacement_y / total_displacement * 10)
-
   	}
 
-	creep(total_displacement_x / total_displacement * (total_displacement - partial_displacement), total_displacement_y / total_displacement * (total_displacement - partial_displacement))
+	if(total_displacement - partial_displacement <= 10) creep(total_displacement - partial_displacement)
 
 	if(ball.x > canvas.width - ball.r) {
 		ball.x = canvas.width - ball.r
