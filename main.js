@@ -127,6 +127,20 @@ function keyPressed(evt) {
     }
 }
 
+function touchMoved(evt) {
+    if (game_state != 'aiming') {return};
+
+    var rect = canvas.getBoundingClientRect();
+
+    var x = evt.touches[0].pageX;
+    var y = evt.touches[0].pageY;
+
+    mouse = {
+        x: (x - rect.left) * 2,
+        y: (y - rect.top) * 2
+    }
+}
+
 function shoot() {
     if(game_state === 'aiming'){
         balls = []
@@ -142,8 +156,20 @@ document.addEventListener('mousemove', e => {
         y: (e.clientY - rect.top) * 2
     }
 })
+
+//for desktop: spacebar or mousedown to fire
 document.addEventListener('keydown', keyPressed, true);
 document.addEventListener('mousedown', shoot, true);
+//for mobile: touchmove to pan around, touchend to fire
+document.addEventListener('touchmove', touchMoved, true);
+document.addEventListener('touchend', shoot, true);
+
+//prevent scrolling on touchscreen
+document.ontouchstart = function(e){ 
+    if ('ontouchstart' in document.documentElement) {
+        e.preventDefault(); 
+    }
+}
 
 //once HTML loads, grab the canvas and score elements
 window.onload = function() {
