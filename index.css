@@ -5,7 +5,7 @@ body {
 	font-family: 'avenir';
 }
 
-h1 {
+h1, p {
 	text-align: center;
 	margin: 0;
 	padding: 2% 0 0 0;

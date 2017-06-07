@@ -8,6 +8,8 @@ let ball_start_pos
 let particles = []
 
 let currentLevel = 33
+let socreSpan = document.getElementById("score")
+socreSpan.innerHTML = String(currentLevel)
 
 const level = `..........
 ....888...
@@ -44,7 +46,6 @@ function updateCellsForCurrentLevel() {
             tempVal = currentLevel;
         }
         newCell = [tempRow, tempCol, tempVal];
-        console.log(newCell)
         cells.push(newCell);
     }
 }
@@ -110,6 +111,7 @@ function tick(t){
 
             //update to next level
             currentLevel++;
+            socreSpan.innerHTML = String(currentLevel)
             updateCellsForCurrentLevel()
 
             //change game state
