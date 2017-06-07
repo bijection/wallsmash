@@ -18,8 +18,9 @@ const level = `..........
 ...88..88.`
 
 const BALL_SPEED = 1200
+const MIN_SLOPE = Math.PI/12
 
-const cells = [] 
+const cells = []
 
 level
 .split('\n')
@@ -165,9 +166,9 @@ document.addEventListener('touchmove', touchMoved, true);
 document.addEventListener('touchend', shoot, true);
 
 //prevent scrolling on touchscreen
-document.ontouchstart = function(e){ 
+document.ontouchstart = function(e){
     if ('ontouchstart' in document.documentElement) {
-        e.preventDefault(); 
+        e.preventDefault();
     }
 }
 
@@ -195,7 +196,7 @@ function render(){
     //     ctx.closePath()
     //     ctx.fill()
     // })
-    
+
     ctx.fillStyle = '#48f'
     balls.forEach(({x,y,vx,vy,r}) => {
         ctx.beginPath()
@@ -204,24 +205,39 @@ function render(){
     })
 
     const launcher_x = ball_start_pos || canvas.width / 2
-    
+
     //launcher
 
-    //if balls can be launched, display line between bottomcenter and mouse 
-    if (game_state === 'aiming') {
+    //if balls can be launched, display line between bottomcenter and mouse
+    launcher_y = canvas.height - 10
+    launcher_line_length = Math.sqrt(canvas.height*canvas.height + canvas.width*canvas.width)
+    aimloop: if (game_state === 'aiming') {
+
+        x_diff = mouse.x - launcher_x
+        y_diff = Math.max(0,launcher_y - mouse.y)
+        launcher_slope = y_diff/x_diff
+        if(Math.abs(launcher_slope) < MIN_SLOPE){
+          x_diff = Math.sign(launcher_slope) == 1 ? Math.cos(MIN_SLOPE) : -1*Math.cos(MIN_SLOPE)
+          // x_diff = Math.sign(y_diff)*x_diff
+          y_diff = Math.sin(MIN_SLOPE)
+        }
+        cur_line_length = Math.sqrt(x_diff*x_diff + y_diff*y_diff)
+        line_scale_factor = launcher_line_length/cur_line_length
+        x_diff *= line_scale_factor
+        y_diff *= line_scale_factor
 
         ctx.save();
         ctx.strokeStyle = '#aaa'
         ctx.beginPath();
         ctx.setLineDash([5, 15]);
         ctx.lineWidth=5;
-        ctx.moveTo(launcher_x, canvas.height - 10);
-        ctx.lineTo(mouse.x, mouse.y);
+        ctx.moveTo(launcher_x, launcher_y);
+        ctx.lineTo(launcher_x + x_diff, launcher_y - y_diff);
         ctx.stroke()
         ctx.restore()
 
         ctx.beginPath()
-        ctx.arc(launcher_x, canvas.height - 10, 10, 0, Math.PI * 2)
+        ctx.arc(launcher_x, launcher_y, 10, 0, Math.PI * 2)
         ctx.fill()
     }
 
@@ -237,8 +253,8 @@ function render(){
         ctx.fillStyle = 'rgba(' + gradient('yiorrd', 1-(num / 32)) + ',1)'
         ctx.fillRect(w*c , h*r , w,h)
 
-        ctx.textBaseline = 'middle' 
-        ctx.textAlign = 'center' 
+        ctx.textBaseline = 'middle'
+        ctx.textAlign = 'center'
         ctx.font = '40px Avenir'
         ctx.fillStyle = 'black';
         ctx.fillText(num, w*(c+.5), h*(r+.5)+2)
@@ -258,10 +274,10 @@ function render(){
         ctx.strokeStyle = 'rgba(' + gradient('hotish', 1-alpha) + ',' + alpha  + ')'
         ctx.beginPath()
         // ctx.arc(x, y, r, 0, Math.PI * 2)
-        // ctx.fill() 
-        ctx.lineWidth = r 
+        // ctx.fill()
+        ctx.lineWidth = r
         ctx.moveTo(x,y)
-        ctx.lineTo(x+vx /10, y + vy / 10)  
+        ctx.lineTo(x+vx /10, y + vy / 10)
         ctx.stroke()
     })
     ctx.fillStyle = 'black'
@@ -311,7 +327,7 @@ function update_ball_positions(dt){
 
                 let nx = bx*normal_len, ny = by*normal_len
                 let amt = 1+1
-                
+
                 abx -= amt*nx
                 aby -= amt*ny
 
@@ -325,7 +341,7 @@ function update_ball_positions(dt){
                 }
                 // reset current transformation matrix to the identity matrix
                 for (var i = 0; i < 1; i++) {
-                    
+
 
                     const v = Math.random()
                     const k = 1+ Math.random()
@@ -446,7 +462,7 @@ function bounce (rect, circle) {
         y: Math.abs(c2c.y) - half.y};
     if (side_dist.x >  circle.r || side_dist.y >  circle.r) return false // outside
     if (side_dist.x < -circle.r && side_dist.y < -circle.r) return false // inside
-    
+
     if (side_dist.x < 0 || side_dist.y < 0) { // intersects side or corner
         var dx = 0, dy = 0, d = 0;
         if (Math.abs(side_dist.x) < circle.r && side_dist.y < 0){
