@@ -17,6 +17,8 @@ const level = `..........
 .8.88888..
 ...88..88.`
 
+const BALL_SPEED = 1200
+
 const cells = [] 
 
 level
@@ -71,7 +73,7 @@ function tick(t){
     render()
 
     if(game_state === 'playing'){
-        
+
         if(balls.length < currentLevel) {
             const r = 10
             const x = ball_start_pos || canvas.width / 2
@@ -84,20 +86,27 @@ function tick(t){
             balls.push({
                 x,
                 y,
-                vx:dx / d * 1200,
-                vy:dy / d * 1200,
+                vx:dx / d * BALL_SPEED,
+                vy:dy / d * BALL_SPEED,
                 r
             })
-        } else if(balls.every(ball => ball.done)) {
-            game_state = 'gathering'
-            balls.forEach(ball => {
-                ball.vx = (ball_start_pos - ball.x) * (2 + Math.random())
-                ball.gather_dir = (ball_start_pos - ball.x) || 1
-            })
+        } else {
+            if(balls.every(ball => ball.gathered)) {
+                balls = []
+
+                //update to next level
+                currentLevel++;
+                socreSpan.innerHTML = String(currentLevel)
+                updateCellsForCurrentLevel()
+
+                //change game state
+                game_state = 'aiming'
+            }
         }
 
-    } else if(game_state === 'gathering') {
-        balls.forEach(ball => {
+        balls
+        .filter(ball => ball.done)
+        .forEach(ball => {
             // console.log(ball_start_pos, ball.x, ball.gather_dir)
             const d = ball_start_pos - ball.x
             if(Math.abs(d) < 1e-8 || d / ball.gather_dir < 0) {
@@ -107,17 +116,8 @@ function tick(t){
                 // console.log('gathered', ball)
             }
         })
-        if(balls.every(ball => ball.gathered)) {
-            balls = []
 
-            //update to next level
-            currentLevel++;
-            socreSpan.innerHTML = String(currentLevel)
-            updateCellsForCurrentLevel()
 
-            //change game state
-            game_state = 'aiming'
-        }
     }
 }
 
@@ -182,10 +182,22 @@ window.onload = function() {
 
 function render(){
 
+    //supposed to be motion trails
+    // this works bad for some reason
+    // ctx.fillStyle = 'rgba(0,0,255,.3)'
+    // balls.forEach(({x,y,vx,vy,r}) => {
+    //     const v = Math.sqrt(vx*vx + vy*vy)
 
-    //loop through all balls
+    //     ctx.beginPath()
+    //     ctx.moveTo(x- vx/v * 60, y - vy/v * 60)
+    //     ctx.lineTo(x+vx/v * r, y-vy/v*r)
+    //     ctx.lineTo(x-vx/v * r, y+vy/v*r)
+    //     ctx.closePath()
+    //     ctx.fill()
+    // })
+    
     ctx.fillStyle = '#48f'
-    balls.forEach(({x,y,r}) => {
+    balls.forEach(({x,y,vx,vy,r}) => {
         ctx.beginPath()
         ctx.arc(x, y, r, 0, Math.PI * 2)
         ctx.fill()
@@ -240,12 +252,17 @@ function render(){
 
 
 
-    particles.forEach(({x,y,r, age, lifetime}) => {
+    particles.forEach(({x,y,r, vx,vy, age, lifetime}) => {
         const alpha = (1 - age/lifetime)
         ctx.fillStyle = 'rgba(' + gradient('hotish', 1-alpha) + ',' + alpha / 3 + ')'
+        ctx.strokeStyle = 'rgba(' + gradient('hotish', 1-alpha) + ',' + alpha  + ')'
         ctx.beginPath()
-        ctx.arc(x, y, r, 0, Math.PI * 2)
-        ctx.fill()        
+        // ctx.arc(x, y, r, 0, Math.PI * 2)
+        // ctx.fill() 
+        ctx.lineWidth = r 
+        ctx.moveTo(x,y)
+        ctx.lineTo(x+vx /10, y + vy / 10)  
+        ctx.stroke()
     })
     ctx.fillStyle = 'black'
 
@@ -288,32 +305,6 @@ function update_ball_positions(dt){
                 cell[2]--
                 cell.hit = true
 
-                // reset current transformation matrix to the identity matrix
-                for (var i = 0; i < 0; i++) {
-                    
-                    const a = Math.random()*Math.PI*2
-
-                    const v = Math.random()
-
-                    const dx = Math.cos(a)
-                    const dy = Math.sin(a)
-
-                    particles.push({
-                        age: 0,
-                        x: ball.x,
-                        y: ball.y,
-                        r: 1,
-                        vx: dx * 1000 *v,
-                        vy: dy * 1000 *v,
-                        vr: 30,
-                        ax: 0,
-                        ay: 0,
-                        ar: 0,
-                        f: .1,
-                        lifetime: 1
-                    })
-                }
-
                 let [bx, by, d] = b
 
                 var normal_len = bx*ball.vx + by*ball.vy
@@ -332,6 +323,29 @@ function update_ball_positions(dt){
                     ady += amt2*by
                     dhits++
                 }
+                // reset current transformation matrix to the identity matrix
+                for (var i = 0; i < 1; i++) {
+                    
+
+                    const v = Math.random()
+                    const k = 1+ Math.random()
+
+                    particles.push({
+                        age: 0,
+                        x: ball.x,
+                        y: ball.y,
+                        r: 1,
+                        vx: (ball.vx - k*nx) * v,
+                        vy: (ball.vy - k*ny) * v ,
+                        vr: 30,
+                        ax: 0,
+                        ay: 0,
+                        ar: 0,
+                        f: .1,
+                        lifetime: 1
+                    })
+                }
+
             })
 
             if(vhits > 0){
@@ -374,12 +388,22 @@ function update_ball_positions(dt){
 
             if(!balls.some(ball => ball.done)){
                 ball_start_pos = ball.x
+            } else {
+                ball.vx = (ball_start_pos - ball.x) * (2 + Math.random())
+                ball.gather_dir = (ball_start_pos - ball.x) || 1
             }
             ball.done = true
         }
         if(ball.y < ball.r) {
             ball.y = ball.r
             ball.vy *= -1
+        }
+
+        const v = Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy)
+        if(v == 0) ball.gathered = true
+        if(v > 0 && !ball.done){
+            ball.vx *= BALL_SPEED / v
+            ball.vy *= BALL_SPEED / v
         }
     })
 }
