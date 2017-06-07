@@ -1,12 +1,6 @@
 let ctx = 0;
 let socreSpan = 0;
 
-window.onload = function() {
-    ctx = canvas.getContext('2d');
-    socreSpan = document.getElementById("score")
-    socreSpan.innerHTML = String(currentLevel)
-}
-
 let numRows = 0;
 let numCols = 0;
 
@@ -151,6 +145,12 @@ document.addEventListener('mousemove', e => {
 document.addEventListener('keydown', keyPressed, true);
 document.addEventListener('mousedown', shoot, true);
 
+//once HTML loads, grab the canvas and score elements
+window.onload = function() {
+    ctx = canvas.getContext('2d');
+    socreSpan = document.getElementById("score")
+    socreSpan.innerHTML = String(currentLevel)
+}
 
 
 
