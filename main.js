@@ -1,5 +1,5 @@
 let ctx;
-let socreSpan;
+let scoreSpan;
 
 let numRows = 0;
 let numCols = 0;
@@ -17,7 +17,7 @@ const level = `..........
 .8.88888..
 ...88..88.`
 
-const BALL_SPEED = 1200
+const BALL_SPEED = 2000
 
 const cells = [] 
 
@@ -68,9 +68,9 @@ function tick(t){
 
     // ctx.setTransform(1, 0, 0, 1, 0, 0);
 
+    render()
     update_ball_positions(dt)
     update_particles(dt)
-    render()
 
     if(game_state === 'playing'){
 
@@ -96,7 +96,7 @@ function tick(t){
 
                 //update to next level
                 currentLevel++;
-                socreSpan.innerHTML = String(currentLevel)
+                scoreSpan.innerHTML = String(currentLevel)
                 updateCellsForCurrentLevel()
 
                 //change game state
@@ -174,8 +174,8 @@ document.ontouchstart = function(e){
 //once HTML loads, grab the canvas and score elements
 window.onload = function() {
     ctx = canvas.getContext('2d');
-    socreSpan = document.getElementById("score")
-    socreSpan.innerHTML = String(currentLevel)
+    scoreSpan = document.getElementById("score")
+    scoreSpan.innerHTML = String(currentLevel)
 }
 
 
@@ -202,9 +202,8 @@ function render(){
         ctx.arc(x, y, r, 0, Math.PI * 2)
         ctx.fill()
     })
+    const launcher_x = ball_start_pos || canvas.width / 2    
 
-    const launcher_x = ball_start_pos || canvas.width / 2
-    
     //launcher
 
     //if balls can be launched, display line between bottomcenter and mouse 
@@ -266,6 +265,7 @@ function render(){
     })
     ctx.fillStyle = 'black'
 
+
 }
 
 
@@ -273,113 +273,10 @@ function update_ball_positions(dt){
     cells.forEach(cell => cell.hit = false)
 
     balls.forEach(ball => {
-        const total_displacement_x = ball.vx * dt
-        const total_displacement_y = ball.vy * dt
-        const total_displacement = Math.sqrt(total_displacement_y*total_displacement_y + total_displacement_x*total_displacement_x)
 
-        let partial_displacement = 0
+        collide_circle_rects(ball, dt)
 
 
-        function creep(displacement){
-            ball.x+= total_displacement_x / total_displacement * displacement
-            ball.y+= total_displacement_y / total_displacement * displacement
-
-            let hit = false
-
-            let abx = 0, aby = 0
-            let adx = 0, ady = 0
-
-            let vhits = 0
-            let dhits = 0
-
-            cells.forEach(cell => {
-
-                const [r,c,num] = cell
-
-                if(!num) return;
-
-                let b = bounce(get_cell_rect(r,c), ball)
-
-                if(!b) return;
-
-                cell[2]--
-                cell.hit = true
-
-                let [bx, by, d] = b
-
-                var normal_len = bx*ball.vx + by*ball.vy
-
-                let nx = bx*normal_len, ny = by*normal_len
-                let amt = 1+1
-                
-                abx -= amt*nx
-                aby -= amt*ny
-
-                vhits++
-
-                let amt2 = ball.r - d
-                if(amt2 > 0){
-                    adx += amt2*bx
-                    ady += amt2*by
-                    dhits++
-                }
-                // reset current transformation matrix to the identity matrix
-                for (var i = 0; i < 1; i++) {
-                    
-
-                    const v = Math.random()
-                    const k = 1+ Math.random()
-
-                    particles.push({
-                        age: 0,
-                        x: ball.x,
-                        y: ball.y,
-                        r: 1,
-                        vx: (ball.vx - k*nx) * v,
-                        vy: (ball.vy - k*ny) * v ,
-                        vr: 30,
-                        ax: 0,
-                        ay: 0,
-                        ar: 0,
-                        f: .1,
-                        lifetime: 1
-                    })
-                }
-
-            })
-
-            if(vhits > 0){
-                ball.vx += abx/vhits
-                ball.vy += aby/vhits
-            }
-
-            if(dhits > 0){
-                ball.x += adx / dhits
-                ball.y += ady / dhits
-            }
-
-            return vhits > 0 || dhits > 0
-        }
-
-
-
-        while(total_displacement - partial_displacement > 10 && !creep(10)){
-            partial_displacement += 10
-        }
-
-        const remaining_displacement = total_displacement - partial_displacement
-        if(remaining_displacement <= 10 && remaining_displacement > 0) {
-            creep(total_displacement - partial_displacement)
-        }
-
-        if(ball.x > canvas.width - ball.r) {
-            ball.x = canvas.width - ball.r
-            ball.vx *= -1
-        }
-        if(ball.x < ball.r) {
-            ball.x = ball.r
-            ball.vx *= -1
-        }
         if(ball.y > canvas.height - ball.r) {
             ball.y = canvas.height - ball.r
             // ball.vy *= -1
@@ -388,23 +285,21 @@ function update_ball_positions(dt){
 
             if(!balls.some(ball => ball.done)){
                 ball_start_pos = ball.x
+                ball.gathered = true
             } else {
                 ball.vx = (ball_start_pos - ball.x) * (2 + Math.random())
                 ball.gather_dir = (ball_start_pos - ball.x) || 1
             }
             ball.done = true
         }
-        if(ball.y < ball.r) {
-            ball.y = ball.r
-            ball.vy *= -1
-        }
+
 
         const v = Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy)
         if(v == 0) ball.gathered = true
-        if(v > 0 && !ball.done){
-            ball.vx *= BALL_SPEED / v
-            ball.vy *= BALL_SPEED / v
-        }
+        // if(v > 0 && !ball.done){
+        //     ball.vx *= BALL_SPEED / v
+        //     ball.vy *= BALL_SPEED / v
+        // }
     })
 }
 
@@ -432,42 +327,196 @@ function update_particles(dt){
 }
 
 
+function collide_circle_rects(circle,dt){
 
-function bounce (rect, circle) {
-    // compute a c2c-to-c2c vector
-    var half = { x: rect.w/2, y: rect.h/2 };
-    var c2c = {
-        x: circle.x - (rect.x+half.x),
-        y: circle.y - (rect.y+half.y)};
 
-    // check circle position inside the rectangle quadrant
-    var side_dist = {
-        x: Math.abs(c2c.x) - half.x,
-        y: Math.abs(c2c.y) - half.y};
-    if (side_dist.x >  circle.r || side_dist.y >  circle.r) return false // outside
-    if (side_dist.x < -circle.r && side_dist.y < -circle.r) return false // inside
+    const {r} = circle
+
+    const v = Math.sqrt(circle.vx*circle.vx+circle.vy*circle.vy)
+    let distance_left = v * dt
+
+    do {
+        
+        const [vx,vy] = unit([circle.vx, circle.vy])
+        const start = [circle.x, circle.y]
+        const end = [circle.x + vx * distance_left, circle.y + vy * distance_left]
+
+        let mind = Infinity
+        let minp;
+        let mincell;
+        let normal;
+
+        const walls = [
+            [[0,0], [0, canvas.height]],
+                // [[0, canvas.height], [canvas.width, canvas.height]],
+            [[canvas.width, canvas.height], [canvas.width, 0]],
+            [[canvas.width, 0], [0,0]],
+        ]
+
+        walls.forEach(wall => {
+
+            const hit = intersection(start, minus(start, end), wall[0], minus(wall[1], wall[0]))
+            if(hit && !equal(hit, start) && between(hit, start, end) && between(hit, wall[0], wall[1])) {
+                const d = dist2(start, hit)
+                if(d < mind){
+                    mind = d
+                    minp = hit
+                    normal = unit(cross(wall[0], wall[1]))
+                    mincell = false
+                }
+            }
+        })
+
+        cells.forEach(cell => {
+            const [r,c,num] = cell
+            if(num <= 0) return;
+
+            const {x,y,w,h} = get_cell_rect(r,c)
+
+            const arcs = [
+                [x, y],
+                [x+w, y],
+                [x+w, y + h],
+                [x, y+h],
+            ]
+
+            const segs = [
+                [[x, y - r], [x + w, y - r]],
+                [[x + w + r, y], [x + w + r, y + h]],
+                [[x + w, y + h + r], [x, y + h + r]],
+                [[x - r, y + h], [x - r, y ]],
+            ]
+
+            arcs.forEach(a => {
+                const hit = lineCircleIntersection(start, end, a, r)
+
+                if(hit){
+                    const [h1, h2] = hit
+                    const d1 = dist2(h1, start), d2 = dist2(h2, start)
+                    if(between(h1, start, end) && d1 < mind && !equal(h1, start)) {
+                        mind = d1
+                        minp = h1
+                        normal = unit(minus(h1, a))
+                        mincell = cell
+                    }
+                    if(between(h2, start, end) && d2 < mind && !equal(h2, start)) {
+                        mind = d2
+                        minp = h2
+                        normal = unit(minus(h2, a))
+                        mincell = cell
+                    }
+                }
+            })
+
+            segs.forEach(s => {
+
+                const hit = intersection(start, minus(start, end), s[0], minus(s[1], s[0]))
+                if(hit && !equal(hit, start) && between(hit, start, end) && between(hit, s[0], s[1])) {
+                    const d = dist2(start, hit)
+                    if(d < mind){
+                        mind = d
+                        minp = hit
+                        normal = unit(cross(s[0], s[1]))
+                        mincell = cell
+                    }
+                }
+            })
+        })
     
-    if (side_dist.x < 0 || side_dist.y < 0) { // intersects side or corner
-        var dx = 0, dy = 0, d = 0;
-        if (Math.abs(side_dist.x) < circle.r && side_dist.y < 0){
-            dx = c2c.x*side_dist.x < 0 ? -1 : 1;
-            d = Math.abs(side_dist.x)
-        } else if (Math.abs(side_dist.y) < circle.r && side_dist.x < 0){
-            dy = c2c.y*side_dist.y < 0 ? -1 : 1;
-            d = Math.abs(side_dist.y)
+        if(minp){
+
+            
+
+            const bounce = 2* dot(minus(end, start), normal)
+            const newv = scale(unit(minus(minus(end, start), scale(normal, bounce))), v)
+
+            // const d = dist(end, start) - 
+
+            circle.x = minp[0]
+            circle.y = minp[1]
+
+            circle.vx = newv[0]
+            circle.vy = newv[1]
+
+            distance_left -= dist(minp, start)
+
+            if(mincell){
+                mincell.hit = true
+                mincell[2]--
+            }
+
+        } else {
+            circle.x = end[0]
+            circle.y = end[1]
+            distance_left = 0       
+
         }
-        return [dx, dy, d];
-    }
 
-    // circle is near the corner
-    let bounce = side_dist.x*side_dist.x + side_dist.y*side_dist.y  < circle.r*circle.r;
-    if (!bounce) return false
+        // ctx.beginPath()
+        // ctx.moveTo(...start)
+        // ctx.lineTo(circle.x, circle.y)
+        // ctx.stroke()
 
-    var norm = Math.sqrt (side_dist.x*side_dist.x+side_dist.y*side_dist.y);
-    var dx = c2c.x < 0 ? -1 : 1;
-    var dy = c2c.y < 0 ? -1 : 1;
-    return [dx*side_dist.x/norm, dy*side_dist.y/norm, norm]
+
+    } while(distance_left > 0)
+
 }
+
+
+function lineCircleIntersection(start,end,o,r){
+    const [m,n] = o
+    const [x,y] = start
+    const [x1,y1] = end
+    const a = x1 - x, b = y1 - y
+
+    const derp = a*a + b*b
+
+    const wolo = (a*(m - x) + b*(n - y))
+    const blah = 4*wolo*wolo - 4*derp*(m*m - 2*m*x + n*n - 2*n*y - r*r + x*x + y*y)
+
+    if(blah < 0) return false
+
+    const merp = a*m - a*x + b*n - b*y
+    const bla = Math.sqrt(blah)
+
+    const k1 = (bla / 2 + merp)/derp
+    const k2 = (-bla / 2 + merp)/derp
+
+    return [[x + k1*a, y+k1*b], [x + k2*a, y+k2*b]]
+}
+
+
+const between = ([x1,y1], [x2,y2], [x3,y3]) => 
+    x1 >= Math.min(x2, x3)
+ && x1 <= Math.max(x2, x3)
+ && y1 >= Math.min(y2, y3)
+ && y1 <= Math.max(y2, y3)
+
+
+const minus = ([x1,y1], [x2,y2]) => [x1 - x2, y1 - y2]
+const scale = ([x1,y1], s) => [x1*s, y1*s]
+const dist2 = (p1,p2) => {
+    const [dx, dy] = minus(p1,p2)
+    return dx*dx + dy*dy
+}
+const dist = (p1,p2) => Math.sqrt(dist2(p1,p2))
+const intersection = ([ax, ay], [bx, by], [cx, cy], [dx, dy]) => {
+    const disc = (dx*by-dy*bx)
+    if(disc === 0) return false
+    const u = (bx*(cy-ay) + by*(ax-cx))/disc
+    return [cx+u*dx, cy + u*dy]
+}
+
+function unit([x,y]){
+    const d = Math.sqrt(x*x + y*y)
+    return [x/d, y/d]
+}
+
+const cross = ([x1, y1], [x2, y2]) => [y2 - y1, x1 - x2]
+const dot = ([x1, y1], [x2, y2]) => x1 * x2 + y1 * y2
+const equal = ([x1, y1], [x2, y2]) => Math.abs(x1 - x2) < 1e-8 && Math.abs(y1 - y2) < 1e-8
+
+
 
 function get_cell_rect(r,c){
     const w = canvas.width / 10, h = 100
