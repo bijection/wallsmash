@@ -31,13 +31,14 @@ h2 {
 #canvas {
 	border: 1px solid black;
 	width: 75vw;
-	height: 50vh;
+	height: 75vh;
 	outline: none;
 }
 
 @media (max-width: 700px) {
 	#canvas {
 		width: 100vw;
+		height: 50vh;
 	}
 
 	#scoreInfo, #instructions {
