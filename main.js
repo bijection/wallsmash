@@ -1,7 +1,14 @@
-const ctx = canvas.getContext('2d')
+let ctx = 0;
+let socreSpan = 0;
 
-let numRows = 0
-let numCols = 0
+window.onload = function() {
+    ctx = canvas.getContext('2d');
+    socreSpan = document.getElementById("score")
+    socreSpan.innerHTML = String(currentLevel)
+}
+
+let numRows = 0;
+let numCols = 0;
 
 let balls = []
 let game_state = 'aiming'
@@ -10,8 +17,6 @@ let ball_start_pos
 let particles = []
 
 let currentLevel = 33
-let socreSpan = document.getElementById("score")
-socreSpan.innerHTML = String(currentLevel)
 
 const level = `..........
 ....888...
