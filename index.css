@@ -3,34 +3,29 @@ body {
 	min-height: 100vh;
 	width: 100vw;
 	font-family: 'avenir';
+	text-align: center;
 }
 
-h1 {
-	text-align: center;
-	margin: 0;
-	padding: 2% 0 0 0;
-}
-
-p {
-	text-align: center;
+h1, h2, p {
 	margin: 0;
 	padding: 0;
 }
 
+h1 {
+	padding: 2% 0 0 0;
+}
+
 h2 {
-	margin: 0;
 	padding: 0 0 2% 0;
-	text-align: center;
 	color: gray;
 	font-size: 75%;
 	text-transform: uppercase;
-	 letter-spacing: 2px;
+	letter-spacing: 2.5px;
 }
 
 #canvas-parent {
 	display: flex;
 	justify-content: center;
-	align-items: center;
 }
 
 #canvas {
