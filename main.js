@@ -85,6 +85,15 @@ function tick(t){
             const d = Math.sqrt(dx*dx + dy*dy)
 
             balls.push({
+                //this is a thing for finding nans
+                // _x: x,
+                // set x(n){
+                //     if(isNaN(n)) throw n
+                //     this._x = n
+                // },
+                // get x(){
+                //     return this._x
+                // },
                 x,
                 y,
                 vx:dx / d * BALL_SPEED,
@@ -200,7 +209,7 @@ function render(){
     ctx.fillStyle = '#48f'
     balls.forEach(({x,y,vx,vy,r}) => {
         ctx.beginPath()
-        ctx.arc(x, y, r, 0, Math.PI * 2)
+        ctx.arc(x, y, r , 0, Math.PI * 2)
         ctx.fill()
     })
     const launcher_x = ball_start_pos || canvas.width / 2    
@@ -351,9 +360,7 @@ function collide_circle_rects(circle,dt){
 
     const v = Math.sqrt(circle.vx*circle.vx+circle.vy*circle.vy)
     let distance_left = v * dt
-
-    do {
-        
+    while(distance_left > 0) {
         const [vx,vy] = unit([circle.vx, circle.vy])
         const start = [circle.x, circle.y]
         const end = [circle.x + vx * distance_left, circle.y + vy * distance_left]
@@ -474,7 +481,7 @@ function collide_circle_rects(circle,dt){
         // ctx.stroke()
 
 
-    } while(distance_left > 0)
+    } 
 
 }
 
