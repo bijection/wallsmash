@@ -1,5 +1,5 @@
-let ctx = 0;
-let socreSpan = 0;
+let ctx;
+let socreSpan;
 
 let numRows = 0;
 let numCols = 0;
