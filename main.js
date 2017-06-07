@@ -1,8 +1,10 @@
 const ctx = canvas.getContext('2d')
 
+let numRows = 0
+let numCols = 0
+
 let balls = []
 let game_state = 'aiming'
-let num_balls = 40
 let mouse = {x:0, y:0}
 let ball_start_pos
 let particles = []
@@ -71,7 +73,7 @@ function tick(t){
 
     if(game_state === 'playing'){
         
-        if(balls.length < num_balls) {
+        if(balls.length < currentLevel) {
             const r = 10
             const x = ball_start_pos || canvas.width / 2
             const y = canvas.height - r
