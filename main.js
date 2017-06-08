@@ -19,6 +19,7 @@ const level = `..........
 
 const BALL_SPEED = 1200
 const MIN_SLOPE = Math.PI/12
+const SPRAY_FACTOR = 0.0
 
 const cells = []
 
@@ -80,8 +81,8 @@ function tick(t){
             const x = ball_start_pos || canvas.width / 2
             const y = canvas.height - r
 
-            const dx = mouse.x - x
-            const dy = mouse.y - y
+            const dx = mouse.x - x + SPRAY_FACTOR*(mouse.x - x)*Math.random()
+            const dy = mouse.y - y + SPRAY_FACTOR*(mouse.x - x)*Math.random()
             const d = Math.sqrt(dx*dx + dy*dy)
 
             balls.push({
