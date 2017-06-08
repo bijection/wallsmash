@@ -18,7 +18,8 @@ const level = `..........
 ...88..88.`
 
 const BALL_SPEED = 1200
-const MIN_SLOPE = Math.PI/12
+const BALL_RADIUS = 10
+const MIN_ANGLE = Math.PI/12
 const SPRAY_FACTOR = 0.0
 
 const cells = []
@@ -77,13 +78,14 @@ function tick(t){
     if(game_state === 'playing'){
 
         if(balls.length < currentLevel) {
-            const r = 10
-            const x = ball_start_pos || canvas.width / 2
-            const y = canvas.height - r
 
-            const dx = mouse.x - x + SPRAY_FACTOR*(mouse.x - x)*Math.random()
-            const dy = mouse.y - y + SPRAY_FACTOR*(mouse.x - x)*Math.random()
-            const d = Math.sqrt(dx*dx + dy*dy)
+            let launch_angle = get_launch_angle()
+            if(launch_angle < MIN_ANGLE || launch_angle > 3/2*Math.PI ){
+              launch_angle = MIN_ANGLE
+            }else if (launch_angle > Math.PI-MIN_ANGLE ){
+              launch_angle = Math.PI-MIN_ANGLE
+            }
+
 
             balls.push({
                 //this is a thing for finding nans
@@ -97,9 +99,9 @@ function tick(t){
                 // },
                 x,
                 y,
-                vx:dx / d * BALL_SPEED,
-                vy:dy / d * BALL_SPEED,
-                r
+                vx:Math.cos(launch_angle) * BALL_SPEED,
+                vy:-1*Math.sin(launch_angle) * BALL_SPEED,
+                BALL_RADIUS
             })
         } else {
             if(balls.every(ball => ball.gathered)) {
@@ -189,7 +191,19 @@ window.onload = function() {
     scoreSpan.innerHTML = String(currentLevel)
 }
 
+const get_launch_angle = ()=>{
+  const r = BALL_RADIUS
+  const x = ball_start_pos || canvas.width / 2
+  const y = canvas.height - r
 
+  const dx = mouse.x - x + SPRAY_FACTOR*(mouse.x - x)*Math.random()
+  const dy = mouse.y - y + SPRAY_FACTOR*(mouse.x - x)*Math.random()
+  console.log("dX: "+dx)
+  console.log("dY: "+-1*dy)
+  let launch_angle = Math.atan2(-dy, dx)
+  launch_angle = Math.sign(launch_angle) == -1 ? 2*Math.PI+launch_angle : launch_angle
+  return launch_angle
+}
 
 function render(){
 
@@ -213,27 +227,22 @@ function render(){
         ctx.arc(x, y, r , 0, Math.PI * 2)
         ctx.fill()
     })
-    const launcher_x = ball_start_pos || canvas.width / 2    
-
+    const launcher_x = ball_start_pos || canvas.width / 2
+    const launcher_y = canvas.height - BALL_RADIUS
     //launcher
 
     //if balls can be launched, display line between bottomcenter and mouse
-    launcher_y = canvas.height - 10
-    launcher_line_length = Math.sqrt(canvas.height*canvas.height + canvas.width*canvas.width)
+
+    const launcher_line_length = Math.sqrt(canvas.height*canvas.height + canvas.width*canvas.width)
     aimloop: if (game_state === 'aiming') {
 
-        x_diff = mouse.x - launcher_x
-        y_diff = Math.max(0,launcher_y - mouse.y)
-        launcher_slope = y_diff/x_diff
-        if(Math.abs(launcher_slope) < MIN_SLOPE){
-          x_diff = Math.sign(launcher_slope) == 1 ? Math.cos(MIN_SLOPE) : -1*Math.cos(MIN_SLOPE)
-          // x_diff = Math.sign(y_diff)*x_diff
-          y_diff = Math.sin(MIN_SLOPE)
+        let launch_angle = get_launch_angle()
+        if(launch_angle < MIN_ANGLE || launch_angle > 3/2*Math.PI ){
+          launch_angle = MIN_ANGLE
+        }else if (launch_angle > Math.PI-MIN_ANGLE ){
+          launch_angle = Math.PI-MIN_ANGLE
         }
-        cur_line_length = Math.sqrt(x_diff*x_diff + y_diff*y_diff)
-        line_scale_factor = launcher_line_length/cur_line_length
-        x_diff *= line_scale_factor
-        y_diff *= line_scale_factor
+        console.log("LaunchAngle: "+launch_angle)
 
         ctx.save();
         ctx.strokeStyle = '#aaa'
@@ -241,12 +250,12 @@ function render(){
         ctx.setLineDash([5, 15]);
         ctx.lineWidth=5;
         ctx.moveTo(launcher_x, launcher_y);
-        ctx.lineTo(launcher_x + x_diff, launcher_y - y_diff);
+        ctx.lineTo(launcher_x + launcher_line_length*Math.cos(launch_angle), launcher_y - launcher_line_length*Math.sin(launch_angle));
         ctx.stroke()
         ctx.restore()
 
         ctx.beginPath()
-        ctx.arc(launcher_x, launcher_y, 10, 0, Math.PI * 2)
+        ctx.arc(launcher_x, launcher_y, BALL_RADIUS, 0, Math.PI * 2)
         ctx.fill()
     }
 
@@ -329,7 +338,6 @@ function update_ball_positions(dt){
         // }
     })
 }
-
 
 
 function update_particles(dt){
@@ -447,15 +455,15 @@ function collide_circle_rects(circle,dt){
                 }
             })
         })
-    
+
         if(minp){
 
-            
+
 
             const bounce = 2* dot(minus(end, start), normal)
             const newv = scale(unit(minus(minus(end, start), scale(normal, bounce))), v)
 
-            // const d = dist(end, start) - 
+            // const d = dist(end, start) -
 
             circle.x = minp[0]
             circle.y = minp[1]
@@ -473,7 +481,7 @@ function collide_circle_rects(circle,dt){
         } else {
             circle.x = end[0]
             circle.y = end[1]
-            distance_left = 0       
+            distance_left = 0
         }
 
         // ctx.beginPath()
@@ -482,7 +490,7 @@ function collide_circle_rects(circle,dt){
         // ctx.stroke()
 
 
-    } 
+    }
 
 }
 
@@ -510,7 +518,7 @@ function lineCircleIntersection(start,end,o,r){
 }
 
 
-const between = ([x1,y1], [x2,y2], [x3,y3]) => 
+const between = ([x1,y1], [x2,y2], [x3,y3]) =>
     x1 >= Math.min(x2, x3)
  && x1 <= Math.max(x2, x3)
  && y1 >= Math.min(y2, y3)
