@@ -86,7 +86,9 @@ function tick(t){
               launch_angle = Math.PI-MIN_ANGLE
             }
 
-
+            const r = BALL_RADIUS
+            const x = ball_start_pos || canvas.width / 2
+            const y = canvas.height - r
             balls.push({
                 //this is a thing for finding nans
                 // _x: x,
@@ -99,9 +101,9 @@ function tick(t){
                 // },
                 x,
                 y,
-                vx:Math.cos(launch_angle) * BALL_SPEED,
-                vy:-1*Math.sin(launch_angle) * BALL_SPEED,
-                BALL_RADIUS
+                vx:Math.cos(launch_angle) * BALL_SPEED, // cos(theta)
+                vy:-1*Math.sin(launch_angle) * BALL_SPEED, // sin(theta)
+                r
             })
         } else {
             if(balls.every(ball => ball.gathered)) {
@@ -198,8 +200,6 @@ const get_launch_angle = ()=>{
 
   const dx = mouse.x - x + SPRAY_FACTOR*(mouse.x - x)*Math.random()
   const dy = mouse.y - y + SPRAY_FACTOR*(mouse.x - x)*Math.random()
-  console.log("dX: "+dx)
-  console.log("dY: "+-1*dy)
   let launch_angle = Math.atan2(-dy, dx)
   launch_angle = Math.sign(launch_angle) == -1 ? 2*Math.PI+launch_angle : launch_angle
   return launch_angle
@@ -234,7 +234,7 @@ function render(){
     //if balls can be launched, display line between bottomcenter and mouse
 
     const launcher_line_length = Math.sqrt(canvas.height*canvas.height + canvas.width*canvas.width)
-    aimloop: if (game_state === 'aiming') {
+    if (game_state === 'aiming') {
 
         let launch_angle = get_launch_angle()
         if(launch_angle < MIN_ANGLE || launch_angle > 3/2*Math.PI ){
@@ -242,7 +242,6 @@ function render(){
         }else if (launch_angle > Math.PI-MIN_ANGLE ){
           launch_angle = Math.PI-MIN_ANGLE
         }
-        console.log("LaunchAngle: "+launch_angle)
 
         ctx.save();
         ctx.strokeStyle = '#aaa'
