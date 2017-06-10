@@ -10,7 +10,9 @@ let mouse = {x:0, y:0}
 let ball_start_pos
 let particles = []
 
-let currentLevel = 33
+let currentLevel = 10
+const ball_types = Array.from(new Array(10), () => 'ball')
+let num_launched_balls = 0
 
 const level = `..........
 ....888...
@@ -20,36 +22,49 @@ const level = `..........
 const BALL_SPEED = 1200
 const BALL_RADIUS = 10
 const MIN_ANGLE = Math.PI/12
-const SPRAY_FACTOR = 0.0
 const NUM_ROWS = 10
 const NUM_COLS = 10
 
 const cells = []
+const items = new Set()
+// items.add([0,0,'ball'])
 
-level
-.split('\n')
-.map((k, row) => k
-.split('')
-.forEach((char, col) => cells.push([row, col, Number(char) *4 || 0 ])))
+// level
+// .split('\n')
+// .map((k, row) => k
+// .split('')
+// .forEach((char, col) => cells.push([row, col, Number(char) * 4 || 0 ])))
 
 let frame_number = 0
 
 function updateCellsForCurrentLevel() {
 
     //Shift each cell down one
-    for (i=0; i<cells.length;i++) {
-        const cell = cells[i]
+    cells.forEach(cell => {
         cell[0]++
         if(cell[0] === (NUM_ROWS - 1) && cell[2] > 0) game_state = 'lost'
-    }
+    })
+
+    items.forEach(item => {
+        item[0]++
+    })
 
     //create new row
     const chanceOfBrick = 0.5;
+    const chanceOfItem = 0.2;
     for (i=0; i<NUM_COLS; i++) {
-        if(Math.random() <= chanceOfBrick)
-            cells.push([0, i, currentLevel]);
+        if(Math.random() <= chanceOfBrick) cells.push([0, i, currentLevel]);
+        else if(Math.random() <= chanceOfItem){
+            if(Math.random() < .5) items.add([0, i, 'jitter'])
+            else items.add([0, i, 'ball'])
+        }
     }
 }
+
+updateCellsForCurrentLevel()
+updateCellsForCurrentLevel()
+updateCellsForCurrentLevel()
+updateCellsForCurrentLevel()
 
 function tick(t){
     frame_number++
@@ -64,37 +79,60 @@ function tick(t){
     ctx.clearRect(0,0, canvas.width, canvas.height)
 
 
-    // ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    render()
+
+    render(t, dt)
     update_ball_positions(dt)
     update_particles(dt)
 
     if(game_state === 'playing'){
 
-        if(balls.length < currentLevel) {
+        if(num_launched_balls < ball_types.length) {
 
-            let launch_angle = get_launch_angle()
+            let type = ball_types[num_launched_balls]
+            num_launched_balls++
 
-            const r = BALL_RADIUS
-            const x = ball_start_pos || canvas.width / 2
-            const y = canvas.height - r
-            balls.push({
-                //this is a thing for finding nans
-                // _x: x,
-                // set x(n){
-                //     if(isNaN(n)) throw n
-                //     this._x = n
-                // },
-                // get x(){
-                //     return this._x
-                // },
-                x,
-                y,
-                vx:Math.cos(launch_angle) * BALL_SPEED, // cos(theta)
-                vy:-1*Math.sin(launch_angle) * BALL_SPEED, // sin(theta)
-                r
-            })
+            if(type === 'ball'){
+                let launch_angle = get_launch_angle()
+
+                const r = BALL_RADIUS
+                const x = ball_start_pos || canvas.width / 2
+                const y = canvas.height - r
+
+                balls.push({
+                    //this is a thing for finding nans
+                    // _x: x,
+                    // set x(n){
+                    //     if(isNaN(n)) throw n
+                    //     this._x = n
+                    // },
+                    // get x(){
+                    //     return this._x
+                    // },
+                    x,
+                    y,
+                    vx:Math.cos(launch_angle) * BALL_SPEED, // cos(theta)
+                    vy:-1*Math.sin(launch_angle) * BALL_SPEED, // sin(theta)
+                    r,
+                    type
+                })
+
+            } else if(type === 'jitter'){
+                let launch_angle = get_launch_angle(.1)
+
+                const r = BALL_RADIUS
+                const x = ball_start_pos || canvas.width / 2
+                const y = canvas.height - r
+
+                balls.push({
+                    x,
+                    y,
+                    vx:Math.cos(launch_angle) * BALL_SPEED, // cos(theta)
+                    vy:-1*Math.sin(launch_angle) * BALL_SPEED, // sin(theta)
+                    r,
+                    type
+                })
+            }
         } else {
             if(balls.every(ball => ball.gathered)) {
                 balls = []
@@ -105,6 +143,7 @@ function tick(t){
 
                 //change game state
                 game_state = 'aiming'
+                num_launched_balls = 0
 
                 //potentially set game_state to 'lost'
                 updateCellsForCurrentLevel()
@@ -185,15 +224,15 @@ window.onload = function() {
     scoreSpan.innerHTML = String(currentLevel)
 }
 
-const get_launch_angle = ()=>{
+const get_launch_angle = (spray_angle=0)=>{
     const r = BALL_RADIUS
     const x = ball_start_pos || canvas.width / 2
     const y = canvas.height - r
 
-    const dx = mouse.x - x + SPRAY_FACTOR*(mouse.x - x)*Math.random()
-    const dy = mouse.y - y + SPRAY_FACTOR*(mouse.x - x)*Math.random()
+    const dx = mouse.x - x
+    const dy = mouse.y - y
     
-    let launch_angle = Math.atan2(-dy, dx)
+    let launch_angle = Math.atan2(-dy, dx) + (Math.random() - 0.5) * spray_angle
     if(launch_angle < -Math.PI / 2) launch_angle = Math.PI
 
     const max_angle = Math.atan2(canvas.height / NUM_ROWS, -canvas.width)
@@ -204,7 +243,7 @@ const get_launch_angle = ()=>{
     return launch_angle
 }
 
-function render(){
+function render(t, dt){
 
     //supposed to be motion trails
     // this works bad for some reason
@@ -220,12 +259,14 @@ function render(){
     //     ctx.fill()
     // })
 
-    ctx.fillStyle = '#48f'
-    balls.forEach(({x,y,vx,vy,r}) => {
+    balls.forEach(({x,y,vx,vy,r,type}) => {
+        ctx.fillStyle = '#48f'
+        if(type === 'jitter') ctx.fillStyle = '#8f4'
         ctx.beginPath()
         ctx.arc(x, y, r , 0, Math.PI * 2)
         ctx.fill()
     })
+
     const launcher_x = ball_start_pos || canvas.width / 2
     const launcher_y = canvas.height - BALL_RADIUS
     //launcher
@@ -260,8 +301,8 @@ function render(){
         const { w,h, x,y} = get_cell_rect(r,c)
         if(bang) ctx.translate((Math.random() - .5)*4, (Math.random() - .5)*4);
 
-        ctx.fillStyle = 'rgba(' + gradient('yiorrd', 1-(num / 32)) + ',1)'
-        ctx.fillRect(w*c , h*r , w,h)
+        ctx.fillStyle = 'rgba(' + gradient('yiorrd', 1-(num / currentLevel)) + ',1)'
+        ctx.fillRect(x, y, w,h)
 
         ctx.textBaseline = 'middle'
         ctx.textAlign = 'center'
@@ -270,13 +311,39 @@ function render(){
         ctx.fillText(num, w*(c+.5), h*(r+.5)+2)
         ctx.fillStyle = 'white';
         ctx.fillText(num, w*(c+.5), h*(r+.5))
+        
         ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
 
     cells.forEach(c => drawcell(c))
     cells.filter(cell=>cell.hit).forEach(c => drawcell(c, true))
 
+    items.forEach(item => {
+        const [r,c,type] = item 
+        if(type == 'ball'){
+            const { w,h, x,y} = get_cell_rect(r,c)
+            ctx.fillStyle = '#48f'
+            ctx.beginPath()
+            ctx.arc(x + w / 2,y + h /2, 10, 0, Math.PI*2)
+            ctx.fill()
 
+            ctx.strokeStyle = '#48f'
+            ctx.beginPath()
+            ctx.arc(x + w / 2,y + h /2, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
+            ctx.stroke()
+        } else if(type == 'jitter'){
+            const { w,h, x,y} = get_cell_rect(r,c)
+            ctx.fillStyle = '#8f4'
+            ctx.beginPath()
+            ctx.arc(x + w / 2,y + h /2, 10, 0, Math.PI*2)
+            ctx.fill()
+
+            ctx.strokeStyle = '#8f4'
+            ctx.beginPath()
+            ctx.arc(x + w / 2,y + h /2, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
+            ctx.stroke()
+        }
+    })
 
     particles.forEach(({x,y,r, vx,vy, age, lifetime}) => {
         const alpha = (1 - age/lifetime)
@@ -316,7 +383,6 @@ function update_ball_positions(dt){
 
         move_and_collide_ball(ball, dt)
 
-
         if(ball.y > canvas.height - ball.r) {
             ball.y = canvas.height - ball.r
             // ball.vy *= -1
@@ -347,6 +413,7 @@ function update_ball_positions(dt){
 function update_particles(dt){
     const new_particles = []
     particles.forEach(p => {
+        if(!p.age) p.age = 0
         if(p.age > p.lifetime) return;
 
         p.vx += p.ax * dt
@@ -445,6 +512,7 @@ function move_and_collide_ball(ball,dt){
                 }
             })
 
+
             segs.forEach(s => {
 
                 const hit = intersection(start, minus(start, end), s[0], minus(s[1], s[0]))
@@ -459,6 +527,53 @@ function move_and_collide_ball(ball,dt){
                 }
             })
         })
+
+        items.forEach(item => {
+            const [r,c,type] = item
+            const {w,h,x,y} = get_cell_rect(r,c)
+            const hit_dist = ball.r + 30
+            if(dist2([ball.x, ball.y], [x+w/2, y + h/2]) < hit_dist*hit_dist){
+                items.delete(item)
+                if(type === 'ball') {
+
+                    ball_types.push('ball')
+
+                    if(!balls.some(ball => ball.done)){
+                        ball_start_pos = x+w/2
+                    }
+
+                    balls.push({
+                        x: x+w/2,
+                        y: y + h/2,
+                        vx:0, // cos(theta)
+                        vy:BALL_SPEED, // sin(theta)
+                        r: BALL_RADIUS,
+                        done: true,
+                        type: 'ball'
+                    })
+
+                } else if(type === 'jitter') {
+
+                    ball_types.push('jitter')
+
+                    if(!balls.some(ball => ball.done)){
+                        ball_start_pos = x+w/2
+                    }
+
+                    balls.push({
+                        x: x+w/2,
+                        y: y + h/2,
+                        vx:0, // cos(theta)
+                        vy:BALL_SPEED, // sin(theta)
+                        r: BALL_RADIUS,
+                        done: true,
+                        type: 'jitter'
+                    })
+
+                }
+            }
+        })
+
 
         if(minp){
 
@@ -480,6 +595,26 @@ function move_and_collide_ball(ball,dt){
             if(mincell){
                 mincell.hit = true
                 mincell[2]--
+                if(mincell[2] <= 0){
+                    for (var i = 0; i < 10; i++) {
+                        const { w,h, x,y} = get_cell_rect(...mincell)
+                        const a = Math.random() * 2 * Math.PI
+                        const v = Math.random()
+                        particles.push({
+                            ax: 0,
+                            ay: 0,
+                            ar: 0,
+                            vx: Math.cos(a)*1000 *v,
+                            vy: Math.sin(a)*1000 *v,
+                            vr: 100,
+                            f: .1,
+                            x : x + w/ 2,
+                            y : y + h / 2,
+                            r : 1,
+                            lifetime: Math.random()
+                        })
+                    }
+                }
             }
 
         } else {
