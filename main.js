@@ -21,6 +21,8 @@ const BALL_SPEED = 1200
 const BALL_RADIUS = 10
 const MIN_ANGLE = Math.PI/12
 const SPRAY_FACTOR = 0.0
+const NUM_ROWS = 10
+const NUM_COLS = 10
 
 const cells = []
 
@@ -36,23 +38,16 @@ function updateCellsForCurrentLevel() {
 
     //Shift each cell down one
     for (i=0; i<cells.length;i++) {
-        let currentCell = cells[i];
-        currentCell[0] += 1;
+        const cell = cells[i]
+        cell[0]++
+        if(cell[0] === (NUM_ROWS - 1) && cell[2] > 0) game_state = 'lost'
     }
 
     //create new row
-    let numPossibleBricks = 10;
-    let chanceOfBrick = 0.5;
-    for (i=0; i<numPossibleBricks; i++) {
-        let shouldAddBrick = Math.random() <= chanceOfBrick;
-        let tempRow = 0;
-        let tempCol = i;
-        let tempVal = 0;
-        if (shouldAddBrick) {
-            tempVal = currentLevel;
-        }
-        newCell = [tempRow, tempCol, tempVal];
-        cells.push(newCell);
+    const chanceOfBrick = 0.5;
+    for (i=0; i<NUM_COLS; i++) {
+        if(Math.random() <= chanceOfBrick)
+            cells.push([0, i, currentLevel]);
     }
 }
 
@@ -80,11 +75,6 @@ function tick(t){
         if(balls.length < currentLevel) {
 
             let launch_angle = get_launch_angle()
-            if(launch_angle < MIN_ANGLE || launch_angle > 3/2*Math.PI ){
-              launch_angle = MIN_ANGLE
-            }else if (launch_angle > Math.PI-MIN_ANGLE ){
-              launch_angle = Math.PI-MIN_ANGLE
-            }
 
             const r = BALL_RADIUS
             const x = ball_start_pos || canvas.width / 2
@@ -112,10 +102,12 @@ function tick(t){
                 //update to next level
                 currentLevel++;
                 scoreSpan.innerHTML = String(currentLevel)
-                updateCellsForCurrentLevel()
 
                 //change game state
                 game_state = 'aiming'
+
+                //potentially set game_state to 'lost'
+                updateCellsForCurrentLevel()
             }
         }
 
@@ -194,15 +186,22 @@ window.onload = function() {
 }
 
 const get_launch_angle = ()=>{
-  const r = BALL_RADIUS
-  const x = ball_start_pos || canvas.width / 2
-  const y = canvas.height - r
+    const r = BALL_RADIUS
+    const x = ball_start_pos || canvas.width / 2
+    const y = canvas.height - r
 
-  const dx = mouse.x - x + SPRAY_FACTOR*(mouse.x - x)*Math.random()
-  const dy = mouse.y - y + SPRAY_FACTOR*(mouse.x - x)*Math.random()
-  let launch_angle = Math.atan2(-dy, dx)
-  launch_angle = Math.sign(launch_angle) == -1 ? 2*Math.PI+launch_angle : launch_angle
-  return launch_angle
+    const dx = mouse.x - x + SPRAY_FACTOR*(mouse.x - x)*Math.random()
+    const dy = mouse.y - y + SPRAY_FACTOR*(mouse.x - x)*Math.random()
+    
+    let launch_angle = Math.atan2(-dy, dx)
+    if(launch_angle < -Math.PI / 2) launch_angle = Math.PI
+
+    const max_angle = Math.atan2(canvas.height / NUM_ROWS, -canvas.width)
+    const min_angle = Math.atan2(canvas.height / NUM_ROWS, canvas.width)
+
+    launch_angle = Math.min(Math.max(min_angle, launch_angle), max_angle)
+
+    return launch_angle
 }
 
 function render(){
@@ -237,11 +236,6 @@ function render(){
     if (game_state === 'aiming') {
 
         let launch_angle = get_launch_angle()
-        if(launch_angle < MIN_ANGLE || launch_angle > 3/2*Math.PI ){
-          launch_angle = MIN_ANGLE
-        }else if (launch_angle > Math.PI-MIN_ANGLE ){
-          launch_angle = Math.PI-MIN_ANGLE
-        }
 
         ctx.save();
         ctx.strokeStyle = '#aaa'
@@ -257,7 +251,6 @@ function render(){
         ctx.arc(launcher_x, launcher_y, BALL_RADIUS, 0, Math.PI * 2)
         ctx.fill()
     }
-
 
     function drawcell(cell, bang){
         const [r,c,num] = cell
@@ -299,6 +292,18 @@ function render(){
     })
     ctx.fillStyle = 'black'
 
+    if (game_state === 'lost') {
+        ctx.fillStyle = 'rgba(255,255,255,.5)'
+        ctx.fillRect(0,0, canvas.width, canvas.height)
+
+        ctx.textBaseline = 'middle'
+        ctx.textAlign = 'center'
+        ctx.font = canvas.height / 10 + 'px Avenir'
+
+        ctx.fillStyle = '#48f'
+        ctx.fillText('You Lose 😱', canvas.width / 2, canvas.height / 2)
+    }
+
 
 }
 
@@ -309,7 +314,7 @@ function update_ball_positions(dt){
     balls.forEach(ball => {
 
 
-        collide_circle_rects(ball, dt)
+        move_and_collide_ball(ball, dt)
 
 
         if(ball.y > canvas.height - ball.r) {
@@ -361,17 +366,17 @@ function update_particles(dt){
 }
 
 
-function collide_circle_rects(circle,dt){
+function move_and_collide_ball(ball,dt){
 
 
-    const {r} = circle
+    const {r} = ball
 
-    const v = Math.sqrt(circle.vx*circle.vx+circle.vy*circle.vy)
+    const v = Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy)
     let distance_left = v * dt
     while(distance_left > 0) {
-        const [vx,vy] = unit([circle.vx, circle.vy])
-        const start = [circle.x, circle.y]
-        const end = [circle.x + vx * distance_left, circle.y + vy * distance_left]
+        const [vx,vy] = unit([ball.vx, ball.vy])
+        const start = [ball.x, ball.y]
+        const end = [ball.x + vx * distance_left, ball.y + vy * distance_left]
 
         let mind = Infinity
         let minp;
@@ -385,7 +390,7 @@ function collide_circle_rects(circle,dt){
             [[canvas.width, 0], [0,0]],
         ]
 
-        walls.forEach(wall => {
+        if(!ball.done) walls.forEach(wall => {
 
             const hit = intersection(start, minus(start, end), wall[0], minus(wall[1], wall[0]))
             if(hit && !equal(hit, start) && between(hit, start, end) && between(hit, wall[0], wall[1])) {
@@ -399,7 +404,7 @@ function collide_circle_rects(circle,dt){
             }
         })
 
-        cells.forEach(cell => {
+        if(!ball.done) cells.forEach(cell => {
             const [r,c,num] = cell
             if(num <= 0) return;
 
@@ -464,11 +469,11 @@ function collide_circle_rects(circle,dt){
 
             // const d = dist(end, start) -
 
-            circle.x = minp[0]
-            circle.y = minp[1]
+            ball.x = minp[0]
+            ball.y = minp[1]
 
-            circle.vx = newv[0]
-            circle.vy = newv[1]
+            ball.vx = newv[0]
+            ball.vy = newv[1]
 
             distance_left -= dist(minp, start)
 
@@ -478,14 +483,14 @@ function collide_circle_rects(circle,dt){
             }
 
         } else {
-            circle.x = end[0]
-            circle.y = end[1]
+            ball.x = end[0]
+            ball.y = end[1]
             distance_left = 0
         }
 
         // ctx.beginPath()
         // ctx.moveTo(...start)
-        // ctx.lineTo(circle.x, circle.y)
+        // ctx.lineTo(ball.x, ball.y)
         // ctx.stroke()
 
 
@@ -550,7 +555,7 @@ const equal = ([x1, y1], [x2, y2]) => Math.abs(x1 - x2) < 1e-8 && Math.abs(y1 - 
 
 
 function get_cell_rect(r,c){
-    const w = canvas.width / 10, h = 100
+    const w = canvas.width / NUM_COLS, h = canvas.height / NUM_ROWS
     return { w,h, x: w*c, y: h*r}
 }
 
