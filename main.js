@@ -86,9 +86,9 @@ function tick(t){
               launch_angle = Math.PI-MIN_ANGLE
             }
 
-            const r = BALL_RADIUS
-            const x = ball_start_pos || canvas.width / 2
-            const y = canvas.height - r
+            const r = BALL_RADIUS;
+            const x = ball_start_pos || canvas.width / 2;
+            const y = canvas.height - r;
             balls.push({
                 //this is a thing for finding nans
                 // _x: x,
