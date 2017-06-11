@@ -133,6 +133,7 @@ function tick(t){
                     type
                 })
             }
+
         } else {
             if(balls.every(ball => ball.gathered)) {
                 balls = []
