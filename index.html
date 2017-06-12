@@ -5,12 +5,30 @@
 		<meta name="viewport" content="width=device-width">
 		<meta name="viewport" content="initial-scale=1.0">
 		<link rel="stylesheet" type="text/css" href="index.css">
-		
-		<title>GKC</title>
+		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.6.5/sweetalert2.min.css">
 
+
+		<title>GKC</title>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.6.5/sweetalert2.min.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/4.1.1/firebase-app.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/4.1.1/firebase-database.js"></script>
+		<script>
+		  var config = {
+		    apiKey: "AIzaSyC575_7reOgsW_UQT3LRi2hZiX6LsQdu88",
+		    authDomain: "cleverstaginc.firebaseapp.com",
+		    databaseURL: "https://cleverstaginc.firebaseio.com",
+		  };
+		  firebase.initializeApp(config);
+			var database = firebase.database();
+	    const scores = database.ref("gkc/highscore")
+		</script>
 		<script type="text/javascript" src="gradient.js"></script>
+		<script type="text/javascript" src="helper.js"></script>
 		<!-- <script type="text/javascript" src="collide.js"></script> -->
 		<script type="text/javascript" src="main.js"></script>
+
+
+
 
 	</head>
 	<body>
@@ -20,7 +38,7 @@
 		<div id="scoreInfo">
 			<p>Record: <span id="record">0</span></p>
 			<p>Score: <span id="score">0</span></p>
-		</div> 
+		</div>
 
 		<div id="canvas-parent">
 			<canvas id="canvas" tabindex='1'></canvas>

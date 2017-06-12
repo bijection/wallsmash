@@ -42,7 +42,10 @@ function updateCellsForCurrentLevel() {
     //Shift each cell down one
     cells.forEach(cell => {
         cell[0]++
-        if(cell[0] === (NUM_ROWS - 1) && cell[2] > 0) game_state = 'lost'
+        if(cell[0] === (NUM_ROWS - 1) && cell[2] > 0) {
+          if(game_state != 'lost') gameLost()
+          game_state = 'lost'
+        }
     })
 
     items.forEach(item => {
@@ -232,7 +235,7 @@ const get_launch_angle = (spray_angle=0)=>{
 
     const dx = mouse.x - x
     const dy = mouse.y - y
-    
+
     let launch_angle = Math.atan2(-dy, dx) + (Math.random() - 0.5) * spray_angle
     if(launch_angle < -Math.PI / 2) launch_angle = Math.PI
 
@@ -312,7 +315,7 @@ function render(t, dt){
         ctx.fillText(num, w*(c+.5), h*(r+.5)+2)
         ctx.fillStyle = 'white';
         ctx.fillText(num, w*(c+.5), h*(r+.5))
-        
+
         ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
 
@@ -320,7 +323,7 @@ function render(t, dt){
     cells.filter(cell=>cell.hit).forEach(c => drawcell(c, true))
 
     items.forEach(item => {
-        const [r,c,type] = item 
+        const [r,c,type] = item
         if(type == 'ball'){
             const { w,h, x,y} = get_cell_rect(r,c)
             ctx.fillStyle = '#48f'
@@ -370,11 +373,29 @@ function render(t, dt){
 
         ctx.fillStyle = '#48f'
         ctx.fillText('You Lose 😱', canvas.width / 2, canvas.height / 2)
+
     }
 
 
 }
 
+function restartGame(){
+
+}
+
+function gameLost(){
+  let uname = localStorage.getItem("username")
+  let pr = localStorage.getItem("pr")
+  console.log("Game state lost")
+  if(!uname){
+    swalPrompt("New high score!", "Enter your username below to post your score to the leaderboard.", (uname)=>{
+      pushNewScore(uname, currentLevel, restartGame)
+    })
+  }else if(currentLevel > pr){
+    swal("New high score!", currentLevel+" is your new personal record.")
+    pushNewScore(uname, currentLevel)
+  }
+}
 
 function update_ball_positions(dt){
     cells.forEach(cell => cell.hit = false)
