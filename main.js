@@ -7,12 +7,12 @@ let numCols = 0;
 let balls = []
 let game_state = 'aiming'
 let mouse = {x:0, y:0}
-let ball_start_pos
+let ball_start_pos, next_ball_start_pos
 let particles = []
 
 let currentLevel = 10
-const ball_types = Array.from(new Array(10), () => 'ball')
-let num_launched_balls = 0
+const next_ball_types = Array.from(new Array(10), () => 'ball')
+let ball_types = Array.from(next_ball_types)
 
 const level = `..........
 ....888...
@@ -90,10 +90,9 @@ function tick(t){
 
     if(game_state === 'playing'){
 
-        if(num_launched_balls < ball_types.length) {
+        if(ball_types.length) {
 
-            let type = ball_types[num_launched_balls]
-            num_launched_balls++
+            let type = ball_types.shift()
 
             if(type === 'ball'){
                 let launch_angle = get_launch_angle()
@@ -103,7 +102,7 @@ function tick(t){
                 const y = canvas.height - r
 
                 balls.push({
-                    //this is a thing for finding nans
+                    // this is a thing for finding nans
                     // _x: x,
                     // set x(n){
                     //     if(isNaN(n)) throw n
@@ -147,7 +146,8 @@ function tick(t){
 
                 //change game state
                 game_state = 'aiming'
-                num_launched_balls = 0
+                ball_start_pos = next_ball_start_pos
+                ball_types = Array.from(next_ball_types)
 
                 //potentially set game_state to 'lost'
                 updateCellsForCurrentLevel()
@@ -158,9 +158,9 @@ function tick(t){
         .filter(ball => ball.done)
         .forEach(ball => {
             // console.log(ball_start_pos, ball.x, ball.gather_dir)
-            const d = ball_start_pos - ball.x
+            const d = next_ball_start_pos - ball.x
             if(Math.abs(d) < 1e-8 || d / ball.gather_dir < 0) {
-                ball.x = ball_start_pos
+                ball.x = next_ball_start_pos
                 ball.vx = 0
                 ball.gathered = true
                 // console.log('gathered', ball)
@@ -305,7 +305,7 @@ function render(t, dt){
         const { w,h, x,y} = get_cell_rect(r,c)
         if(bang) ctx.translate((Math.random() - .5)*4, (Math.random() - .5)*4);
 
-        ctx.fillStyle = 'rgba(' + gradient('yiorrd', 1-(num / currentLevel)) + ',1)'
+        ctx.fillStyle = 'rgba(' + gradient('magma', 1-(num / currentLevel)) + ',1)'
         ctx.fillRect(x, y, w,h)
 
         ctx.textBaseline = 'middle'
@@ -412,11 +412,11 @@ function update_ball_positions(dt){
             ball.vy = 0
 
             if(!balls.some(ball => ball.done)){
-                ball_start_pos = ball.x
+                next_ball_start_pos = ball.x
                 ball.gathered = true
             } else {
-                ball.vx = (ball_start_pos - ball.x) * (2 + Math.random())
-                ball.gather_dir = (ball_start_pos - ball.x) || 1
+                ball.vx = (next_ball_start_pos - ball.x) * (2 + Math.random())
+                ball.gather_dir = (next_ball_start_pos - ball.x) || 1
             }
             ball.done = true
         }
@@ -466,6 +466,7 @@ function move_and_collide_ball(ball,dt){
         const [vx,vy] = unit([ball.vx, ball.vy])
         const start = [ball.x, ball.y]
         const end = [ball.x + vx * distance_left, ball.y + vy * distance_left]
+        if(isNaN(end[0])) throw 'walp'
 
         let mind = Infinity
         let minp;
@@ -556,13 +557,14 @@ function move_and_collide_ball(ball,dt){
             const hit_dist = ball.r + 30
             if(dist2([ball.x, ball.y], [x+w/2, y + h/2]) < hit_dist*hit_dist){
                 items.delete(item)
+
+                if(!balls.some(ball => ball.done)){
+                    next_ball_start_pos = x+w/2
+                }
+
                 if(type === 'ball') {
 
-                    ball_types.push('ball')
-
-                    if(!balls.some(ball => ball.done)){
-                        ball_start_pos = x+w/2
-                    }
+                    next_ball_types.push('ball')
 
                     balls.push({
                         x: x+w/2,
@@ -576,11 +578,7 @@ function move_and_collide_ball(ball,dt){
 
                 } else if(type === 'jitter') {
 
-                    ball_types.push('jitter')
-
-                    if(!balls.some(ball => ball.done)){
-                        ball_start_pos = x+w/2
-                    }
+                    next_ball_types.push('jitter')
 
                     balls.push({
                         x: x+w/2,
