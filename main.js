@@ -25,6 +25,9 @@ const MIN_ANGLE = Math.PI/12
 const NUM_ROWS = 10
 const NUM_COLS = 10
 
+const NORMAL_COLOR = '#48f'
+const JITTER_COLOR = '#691c7e'
+
 const cells = []
 const items = new Set()
 // items.add([0,0,'ball'])
@@ -264,10 +267,14 @@ function render(t, dt){
     // })
 
     balls.forEach(({x,y,vx,vy,r,type}) => {
-        ctx.fillStyle = '#48f'
-        if(type === 'jitter') ctx.fillStyle = '#8f4'
         ctx.beginPath()
-        ctx.arc(x, y, r , 0, Math.PI * 2)
+        if(type === 'ball') {
+            ctx.fillStyle = NORMAL_COLOR
+            ctx.arc(x, y, r , 0, Math.PI * 2)
+        } else if(type === 'jitter') {
+            ctx.fillStyle = JITTER_COLOR
+            ctx.arc(x, y, r , 0, Math.PI * 2)
+        }
         ctx.fill()
     })
 
@@ -302,7 +309,7 @@ function render(t, dt){
 
         if(!num) return;
 
-        const { w,h, x,y} = get_cell_rect(r,c)
+        const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
         if(bang) ctx.translate((Math.random() - .5)*4, (Math.random() - .5)*4);
 
         ctx.fillStyle = 'rgba(' + gradient('magma', 1-(num / currentLevel)) + ',1)'
@@ -312,9 +319,9 @@ function render(t, dt){
         ctx.textAlign = 'center'
         ctx.font = '40px Avenir'
         ctx.fillStyle = 'black';
-        ctx.fillText(num, w*(c+.5), h*(r+.5)+2)
+        ctx.fillText(num, cx, cy + 2)
         ctx.fillStyle = 'white';
-        ctx.fillText(num, w*(c+.5), h*(r+.5))
+        ctx.fillText(num, cx, cy)
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
@@ -325,26 +332,26 @@ function render(t, dt){
     items.forEach(item => {
         const [r,c,type] = item
         if(type == 'ball'){
-            const { w,h, x,y} = get_cell_rect(r,c)
-            ctx.fillStyle = '#48f'
+            const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
+            ctx.fillStyle = NORMAL_COLOR
             ctx.beginPath()
-            ctx.arc(x + w / 2,y + h /2, 10, 0, Math.PI*2)
+            ctx.arc(cx, cy, 10, 0, Math.PI*2)
             ctx.fill()
 
-            ctx.strokeStyle = '#48f'
+            ctx.strokeStyle = NORMAL_COLOR
             ctx.beginPath()
-            ctx.arc(x + w / 2,y + h /2, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
+            ctx.arc(cx, cy, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
             ctx.stroke()
         } else if(type == 'jitter'){
-            const { w,h, x,y} = get_cell_rect(r,c)
-            ctx.fillStyle = '#8f4'
+            const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
+            ctx.fillStyle = JITTER_COLOR
             ctx.beginPath()
-            ctx.arc(x + w / 2,y + h /2, 10, 0, Math.PI*2)
+            ctx.arc(cx, cy, 10, 0, Math.PI*2)
             ctx.fill()
 
-            ctx.strokeStyle = '#8f4'
+            ctx.strokeStyle = JITTER_COLOR
             ctx.beginPath()
-            ctx.arc(x + w / 2,y + h /2, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
+            ctx.arc(cx, cy, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
             ctx.stroke()
         }
     })
@@ -371,7 +378,7 @@ function render(t, dt){
         ctx.textAlign = 'center'
         ctx.font = canvas.height / 10 + 'px Avenir'
 
-        ctx.fillStyle = '#48f'
+        ctx.fillStyle = NORMAL_COLOR
         ctx.fillText('You Lose 😱', canvas.width / 2, canvas.height / 2)
 
     }
@@ -480,7 +487,7 @@ function move_and_collide_ball(ball,dt){
             [[canvas.width, 0], [0,0]],
         ]
 
-        if(!ball.done) walls.forEach(wall => {
+        if(!ball.done && !ball.falling) walls.forEach(wall => {
 
             const hit = intersection(start, minus(start, end), wall[0], minus(wall[1], wall[0]))
             if(hit && !equal(hit, start) && between(hit, start, end) && between(hit, wall[0], wall[1])) {
@@ -494,7 +501,7 @@ function move_and_collide_ball(ball,dt){
             }
         })
 
-        if(!ball.done) cells.forEach(cell => {
+        if(!ball.done && !ball.falling) cells.forEach(cell => {
             const [r,c,num] = cell
             if(num <= 0) return;
 
@@ -553,26 +560,22 @@ function move_and_collide_ball(ball,dt){
 
         items.forEach(item => {
             const [r,c,type] = item
-            const {w,h,x,y} = get_cell_rect(r,c)
+            const {cx, cy} = get_cell_rect(r,c)
             const hit_dist = ball.r + 30
-            if(dist2([ball.x, ball.y], [x+w/2, y + h/2]) < hit_dist*hit_dist){
+            if(dist2([ball.x, ball.y], [cx, cy]) < hit_dist*hit_dist){
                 items.delete(item)
-
-                if(!balls.some(ball => ball.done)){
-                    next_ball_start_pos = x+w/2
-                }
 
                 if(type === 'ball') {
 
                     next_ball_types.push('ball')
 
                     balls.push({
-                        x: x+w/2,
-                        y: y + h/2,
+                        x: cx,
+                        y: cy,
                         vx:0, // cos(theta)
                         vy:BALL_SPEED, // sin(theta)
                         r: BALL_RADIUS,
-                        done: true,
+                        falling: true,
                         type: 'ball'
                     })
 
@@ -581,12 +584,12 @@ function move_and_collide_ball(ball,dt){
                     next_ball_types.push('jitter')
 
                     balls.push({
-                        x: x+w/2,
-                        y: y + h/2,
+                        x: cx,
+                        y: cy,
                         vx:0, // cos(theta)
                         vy:BALL_SPEED, // sin(theta)
                         r: BALL_RADIUS,
-                        done: true,
+                        falling: true,
                         type: 'jitter'
                     })
 
@@ -617,7 +620,7 @@ function move_and_collide_ball(ball,dt){
                 mincell[2]--
                 if(mincell[2] <= 0){
                     for (var i = 0; i < 10; i++) {
-                        const { w,h, x,y} = get_cell_rect(...mincell)
+                        const { cx, cy} = get_cell_rect(...mincell)
                         const a = Math.random() * 2 * Math.PI
                         const v = Math.random()
                         particles.push({
@@ -628,8 +631,8 @@ function move_and_collide_ball(ball,dt){
                             vy: Math.sin(a)*1000 *v,
                             vr: 100,
                             f: .1,
-                            x : x + w/ 2,
-                            y : y + h / 2,
+                            x : cx,
+                            y : cy,
                             r : 1,
                             lifetime: Math.random()
                         })
@@ -711,7 +714,7 @@ const equal = ([x1, y1], [x2, y2]) => Math.abs(x1 - x2) < 1e-8 && Math.abs(y1 - 
 
 function get_cell_rect(r,c){
     const w = canvas.width / NUM_COLS, h = canvas.height / NUM_ROWS
-    return { w,h, x: w*c, y: h*r}
+    return { w,h, x: w*c, y: h*r, cx: w*(c + .5), cy: h*(r+.5)}
 }
 
 
