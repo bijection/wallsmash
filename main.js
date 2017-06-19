@@ -10,8 +10,8 @@ let mouse = {x:0, y:0}
 let ball_start_pos, next_ball_start_pos
 let particles = []
 
-let currentLevel = 10
-const next_ball_types = Array.from(new Array(10), () => 'ball')
+let currentLevel = 1000
+const next_ball_types = Array.from(new Array(currentLevel), () => 'ball')
 let ball_types = Array.from(next_ball_types)
 
 const level = `..........
@@ -61,7 +61,7 @@ function updateCellsForCurrentLevel() {
     for (i=0; i<NUM_COLS; i++) {
         if(Math.random() <= chanceOfBrick) cells.push([0, i, currentLevel]);
         else if(Math.random() <= chanceOfItem){
-            if(Math.random() < .5) items.add([0, i, 'jitter'])
+            if(currentLevel > 10 && currentLevel < 20) items.add([0, i, 'jitter'])
             else items.add([0, i, 'ball'])
         }
     }
@@ -123,7 +123,7 @@ function tick(t){
                 })
 
             } else if(type === 'jitter'){
-                let launch_angle = get_launch_angle(.1)
+                let launch_angle = get_launch_angle(Math.sin(ball_types.length / 8 * Math.PI) *Math.PI / 100)
 
                 const r = BALL_RADIUS
                 const x = ball_start_pos || canvas.width / 2
@@ -231,7 +231,7 @@ window.onload = function() {
     scoreSpan.innerHTML = String(currentLevel)
 }
 
-const get_launch_angle = (spray_angle=0)=>{
+const get_launch_angle = (da = 0)=>{
     const r = BALL_RADIUS
     const x = ball_start_pos || canvas.width / 2
     const y = canvas.height - r
@@ -239,7 +239,7 @@ const get_launch_angle = (spray_angle=0)=>{
     const dx = mouse.x - x
     const dy = mouse.y - y
 
-    let launch_angle = Math.atan2(-dy, dx) + (Math.random() - 0.5) * spray_angle
+    let launch_angle = Math.atan2(-dy, dx) + da
     if(launch_angle < -Math.PI / 2) launch_angle = Math.PI
 
     const max_angle = Math.atan2(canvas.height / NUM_ROWS, -canvas.width)
@@ -310,9 +310,15 @@ function render(t, dt){
         if(!num) return;
 
         const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
-        if(bang) ctx.translate((Math.random() - .5)*4, (Math.random() - .5)*4);
+        // if(bang) ctx.translate((Math.random() - .5)*4, (Math.random() - .5)*4);
 
-        ctx.fillStyle = 'rgba(' + gradient('magma', 1-(num / currentLevel)) + ',1)'
+        // if(num < 50) {
+        //     ctx.fillStyle = 'rgba(' + gradient('magma', 1 - (num / 50)) + ',1)'
+        // } else {
+        //     ctx.fillStyle = 'rgba(' + gradient('magma2', ((num - 50) / Math.max(currentLevel- 49, 50))) + ',1)'
+        // }
+    
+        ctx.fillStyle = 'rgba(' + gradient('progress', num / 125) + ',1)'
         ctx.fillRect(x, y, w,h)
 
         ctx.textBaseline = 'middle'
@@ -464,15 +470,19 @@ function update_particles(dt){
 
 function move_and_collide_ball(ball,dt){
 
+    const radius = ball.r
 
-    const {r} = ball
 
     const v = Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy)
     let distance_left = v * dt
     while(distance_left > 0) {
+
         const [vx,vy] = unit([ball.vx, ball.vy])
+        const inv = [1/vx, 1/vy]
+        
         const start = [ball.x, ball.y]
         const end = [ball.x + vx * distance_left, ball.y + vy * distance_left]
+        
         if(isNaN(end[0])) throw 'walp'
 
         let mind = Infinity
@@ -481,10 +491,10 @@ function move_and_collide_ball(ball,dt){
         let normal;
 
         const walls = [
-            [[0,0], [0, canvas.height]],
+            [[radius,0], [radius, canvas.height - radius]],
                 // [[0, canvas.height], [canvas.width, canvas.height]],
-            [[canvas.width, canvas.height], [canvas.width, 0]],
-            [[canvas.width, 0], [0,0]],
+            [[canvas.width - radius, canvas.height - radius], [canvas.width - radius, radius]],
+            [[canvas.width - radius, radius], [radius,radius]],
         ]
 
         if(!ball.done && !ball.falling) walls.forEach(wall => {
@@ -505,7 +515,21 @@ function move_and_collide_ball(ball,dt){
             const [r,c,num] = cell
             if(num <= 0) return;
 
-            const {x,y,w,h} = get_cell_rect(r,c)
+            const rect = get_cell_rect(r,c)
+
+            const hit = box_ray_intersection({
+                x: rect.x - radius,
+                y: rect.y - radius,
+                w: rect.w + radius * 2,
+                h: rect.h + radius * 2,
+            }, start, inv, distance_left)
+
+            // console.log(hit)
+            // console.log(r,c,hit)
+
+            if(!hit) return;
+
+            const {x,y,w,h} = rect
 
             const arcs = [
                 [x, y],
@@ -515,14 +539,30 @@ function move_and_collide_ball(ball,dt){
             ]
 
             const segs = [
-                [[x, y - r], [x + w, y - r]],
-                [[x + w + r, y], [x + w + r, y + h]],
-                [[x + w, y + h + r], [x, y + h + r]],
-                [[x - r, y + h], [x - r, y ]],
+                [[x, y - radius], [x + w, y - radius]],
+                [[x + w + radius, y], [x + w + radius, y + h]],
+                [[x + w, y + h + radius], [x, y + h + radius]],
+                [[x - radius, y + h], [x - radius, y ]],
             ]
 
+
+            segs.forEach(s => {
+
+                const hit = intersection(start, minus(start, end), s[0], minus(s[1], s[0]))
+                if(hit && !equal(hit, start) && between(hit, start, end) && between(hit, s[0], s[1])) {
+                    const d = dist2(start, hit)
+                    if(d < mind){
+                        mind = d
+                        minp = hit
+                        normal = unit(cross(s[0], s[1]))
+                        mincell = cell
+                    }
+                }
+                
+            })
+
             arcs.forEach(a => {
-                const hit = lineCircleIntersection(start, end, a, r)
+                const hit = lineCircleIntersection(start, end, a, radius)
 
                 if(hit){
                     const [h1, h2] = hit
@@ -542,21 +582,8 @@ function move_and_collide_ball(ball,dt){
                 }
             })
 
-
-            segs.forEach(s => {
-
-                const hit = intersection(start, minus(start, end), s[0], minus(s[1], s[0]))
-                if(hit && !equal(hit, start) && between(hit, start, end) && between(hit, s[0], s[1])) {
-                    const d = dist2(start, hit)
-                    if(d < mind){
-                        mind = d
-                        minp = hit
-                        normal = unit(cross(s[0], s[1]))
-                        mincell = cell
-                    }
-                }
-            })
         })
+
 
         items.forEach(item => {
             const [r,c,type] = item
@@ -679,6 +706,34 @@ function lineCircleIntersection(start,end,o,r){
     return [[x + k1*a, y+k1*b], [x + k2*a, y+k2*b]]
 }
 
+function box_ray_intersection(b, [x, y], [invx, invy], length) {
+
+    const tx1 = (b.x - x)*invx;
+    const tx2 = (b.x + b.w - x)*invx;
+
+    // console.log(tx1, tx2)
+ 
+    let tmin = Math.min(tx1, tx2);
+    let tmax = Math.max(tx1, tx2);
+ 
+    // console.log(tmin, tmax)
+ 
+
+    const ty1 = (b.y - y)*invy;
+    const ty2 = (b.y + b.h - y)*invy;
+ 
+    // console.log(ty1, ty2)
+
+
+    tmin = Math.max(tmin, Math.min(ty1, ty2));
+    tmax = Math.min(tmax, Math.max(ty1, ty2));
+ 
+    // console.log(tmin, tmax)
+
+    return tmax > Math.max(tmin, 0) && tmin < length
+}
+
+// console.log(box_ray_intersection({x:0,y:0,w:10,h:10}, [15, 10], [-Math.SQRT2, -Math.SQRT2], 100))
 
 const between = ([x1,y1], [x2,y2], [x3,y3]) =>
     x1 >= Math.min(x2, x3)
