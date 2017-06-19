@@ -10,8 +10,8 @@ let mouse = {x:0, y:0}
 let ball_start_pos, next_ball_start_pos
 let particles = []
 
-let currentLevel = 1000
-const next_ball_types = Array.from(new Array(currentLevel), () => 'ball')
+let currentLevel = 150
+const next_ball_types = Array.from(new Array(currentLevel-1), () => 'ball')
 let ball_types = Array.from(next_ball_types)
 
 const level = `..........
@@ -79,8 +79,17 @@ function tick(t){
     last = t
     requestAnimationFrame(tick)
 
-    canvas.width = innerWidth * 1.5
-    canvas.height = innerHeight * 1.5
+    // if(innerWidth < 700) {
+    //     canvas.width = innerWidth * 2
+    //     canvas.height = innerHeight
+    // } else {
+    //     canvas.width = innerWidth * 1.5
+    //     canvas.height = innerHeight * 1.5
+    // }
+    const {width, height} = document.getElementById('canvas-wrap').getBoundingClientRect()
+    
+    canvas.width = width * 2
+    canvas.height = height * 2
 
     ctx.clearRect(0,0, canvas.width, canvas.height)
 
@@ -310,7 +319,7 @@ function render(t, dt){
         if(!num) return;
 
         const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
-        // if(bang) ctx.translate((Math.random() - .5)*4, (Math.random() - .5)*4);
+        if(bang) ctx.translate((Math.random() - .5)*10, (Math.random() - .5)*10);
 
         // if(num < 50) {
         //     ctx.fillStyle = 'rgba(' + gradient('magma', 1 - (num / 50)) + ',1)'
@@ -362,10 +371,12 @@ function render(t, dt){
         }
     })
 
-    particles.forEach(({x,y,r, vx,vy, age, lifetime}) => {
+    particles.forEach(({x,y,r, vx,vy, age, lifetime, color, colormap}) => {
         const alpha = (1 - age/lifetime)
-        ctx.fillStyle = 'rgba(' + gradient('hotish', 1-alpha) + ',' + alpha / 3 + ')'
-        ctx.strokeStyle = 'rgba(' + gradient('hotish', 1-alpha) + ',' + alpha  + ')'
+
+        if(colormap) ctx.strokeStyle = 'rgba(' + gradient(colormap, 1-alpha) + ',' + alpha  + ')'
+        else if(color) ctx.strokeStyle = color
+
         ctx.beginPath()
         // ctx.arc(x, y, r, 0, Math.PI * 2)
         // ctx.fill()
@@ -374,6 +385,7 @@ function render(t, dt){
         ctx.lineTo(x+vx /10, y + vy / 10)
         ctx.stroke()
     })
+
     ctx.fillStyle = 'black'
 
     if (game_state === 'lost') {
@@ -558,7 +570,7 @@ function move_and_collide_ball(ball,dt){
                         mincell = cell
                     }
                 }
-                
+
             })
 
             arcs.forEach(a => {
@@ -629,8 +641,10 @@ function move_and_collide_ball(ball,dt){
 
 
 
-            const bounce = 2* dot(minus(end, start), normal)
-            const newv = scale(unit(minus(minus(end, start), scale(normal, bounce))), v)
+            const bounce = dot(minus(end, start), normal)
+            const newv = scale(unit(minus(minus(end, start), scale(normal, 2*bounce))), v)
+            
+            const pv = scale(unit(minus(minus(end, start), scale(normal, (1+Math.random())*bounce))), v*Math.random())
 
             // const d = dist(end, start) -
 
@@ -643,6 +657,20 @@ function move_and_collide_ball(ball,dt){
             distance_left -= dist(minp, start)
 
             if(mincell){
+
+                addParticle({
+                    vx: pv[0],
+                    vy: pv[1],
+                    vr: 100,
+                    f: .1,
+                    x : minp[0],
+                    y : minp[1],
+                    r : 1,
+                    lifetime: Math.random(),
+                    color: 'rgba(' + gradient('progress', mincell[2] / 125) + ',1)'
+                })
+
+
                 mincell.hit = true
                 mincell[2]--
                 if(mincell[2] <= 0){
@@ -650,10 +678,7 @@ function move_and_collide_ball(ball,dt){
                         const { cx, cy} = get_cell_rect(...mincell)
                         const a = Math.random() * 2 * Math.PI
                         const v = Math.random()
-                        particles.push({
-                            ax: 0,
-                            ay: 0,
-                            ar: 0,
+                        addParticle({
                             vx: Math.cos(a)*1000 *v,
                             vy: Math.sin(a)*1000 *v,
                             vr: 100,
@@ -661,7 +686,8 @@ function move_and_collide_ball(ball,dt){
                             x : cx,
                             y : cy,
                             r : 1,
-                            lifetime: Math.random()
+                            lifetime: Math.random(),
+                            color: '#ddd'
                         })
                     }
                 }
@@ -681,6 +707,22 @@ function move_and_collide_ball(ball,dt){
 
     }
 
+}
+
+function addParticle(p){
+    particles.push(Object.assign({
+        ax: 0,
+        ay: 0,
+        ar: 0,
+        vx: 0,
+        vy: 0,
+        vr: 0,
+        f: 0,
+        x : canvas.width/2,
+        y : canvas.height/2,
+        r : 10,
+        lifetime: 1
+    }, p))
 }
 
 
