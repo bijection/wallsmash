@@ -520,7 +520,7 @@ function update_ball_positions(dt){
             ball.vy = 0
 
             if(!balls.some(ball => ball.done)){
-                next_ball_start_pos = ball.x
+                next_ball_start_pos = Math.min(Math.max(ball.x, ball.r), canvas.width - ball.r)
                 ball.gathered = true
             } else {
                 ball.vx = (next_ball_start_pos - ball.x) * (2 + Math.random())
