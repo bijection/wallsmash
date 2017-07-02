@@ -1,26 +1,19 @@
 let ctx;
 let scoreSpan;
-let score = 0
+let recordSpan;
+let score;
 
-let numRows = 0;
-let numCols = 0;
-
-let game_state = 'aiming'
+let game_state;
 let mouse = {x:0, y:0}
 let ball_start_pos, next_ball_start_pos
 
-let balls = []
-let particles = []
-let trails = []
+let balls;
+let particles;
+let trails;
 
-let currentLevel = 2
-const next_ball_types = Array.from(new Array(currentLevel-1), () => 'ball')
-let ball_types = Array.from(next_ball_types)
-
-const level = `..........
-....888...
-.8.88888..
-...88..88.`
+let currentLevel;
+let next_ball_types;
+let ball_types;
 
 let ball_speed = 1200
 
@@ -32,8 +25,28 @@ const NUM_COLS = 10
 const NORMAL_COLOR = '#48f'
 const JITTER_COLOR = '#691c7e'
 
-const cells = []
-const items = new Set()
+let cells = []
+let items = new Set()
+
+
+function startGame(){
+    game_state = 'aiming'
+    
+    currentLevel = 2
+    next_ball_types = Array.from(new Array(currentLevel-1), () => 'ball')
+    ball_types = Array.from(next_ball_types)
+
+    balls = []
+    particles = []
+    trails = []
+
+    score = 0
+    cells = []
+    items = new Set()
+
+    for(let i = 0; i<9; i++)updateCellsForCurrentLevel()
+
+}
 // items.add([0,0,'ball'])
 
 
@@ -72,11 +85,6 @@ function updateCellsForCurrentLevel() {
     }
 }
 
-updateCellsForCurrentLevel()
-updateCellsForCurrentLevel()
-updateCellsForCurrentLevel()
-updateCellsForCurrentLevel()
-
 function tick(t){
     frame_number++
     const dt = (t - last) / 1000
@@ -105,7 +113,6 @@ function tick(t){
     update_particles(dt)
     render(t, dt)
 
-    scoreSpan.innerHTML = score
 
 
     if(game_state === 'playing'){
@@ -245,12 +252,25 @@ document.ontouchstart = function(e){
     }
 }
 
-//once HTML loads, grab the canvas and score elements
-window.onload = function() {
-    ctx = canvas.getContext('2d');
-    scoreSpan = document.getElementById("score")
-    scoreSpan.innerHTML = String(currentLevel)
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const get_launch_angle = (da = 0)=>{
     const r = BALL_RADIUS
@@ -426,37 +446,62 @@ function render(t, dt){
     ctx.fillStyle = 'black'
 
     if (game_state === 'lost') {
-        ctx.fillStyle = 'rgba(255,255,255,.5)'
+        ctx.fillStyle = 'rgba(0,0,0,.3)'
         ctx.fillRect(0,0, canvas.width, canvas.height)
 
         ctx.textBaseline = 'middle'
         ctx.textAlign = 'center'
-        ctx.font = canvas.height / 10 + 'px Avenir'
+        const text_size = canvas.width / 15
+        ctx.font =  text_size+ 'px Avenir'
 
-        ctx.fillStyle = NORMAL_COLOR
-        ctx.fillText('You Lose 😱', canvas.width / 2, canvas.height / 2)
+
+        const sadmessage = [
+            'You Lose 😱',
+            'あなたは失う 😱',
+            'Tu Perdiste 😱',
+            'أنت تفقد 😱',
+            'Tu As Perdu 😱',
+            '你输了 😱'
+        ]
+
+        ctx.fillStyle = '#f0f0f0'
+        ctx.fillText(sadmessage[Math.floor(Date.now() / 1500) % sadmessage.length], canvas.width / 2, canvas.height / 2)
+        
+        ctx.font =  '30px Avenir'
+        ctx.fillText('[tap to restart]', canvas.width / 2, canvas.height / 2 +text_size/2+20)
 
     }
 
 
 }
 
-function restartGame(){
 
-}
 
 function gameLost(){
-  let uname = localStorage.getItem("username")
-  let pr = localStorage.getItem("pr")
-  console.log("Game state lost")
-  if(!uname){
-    swalPrompt("New high score!", "Enter your username below to post your score to the leaderboard.", (uname)=>{
-      pushNewScore(uname, currentLevel, restartGame)
-    })
-  }else if(currentLevel > pr){
-    swal("New high score!", currentLevel+" is your new personal record.")
-    pushNewScore(uname, currentLevel)
-  }
+    let uname = localStorage.getItem("username")
+    let pr = localStorage.getItem("pr") || 0
+    console.log("Game state lost")
+
+    if(score > pr){
+        if(!uname){
+            swalPrompt(score + ": A new high score!", "Enter your username below to post your score to the leaderboard.", (uname)=>{
+                pushNewScore(uname, score)
+            })
+        } else {
+            swal("New high score!", score+" is your new personal record.")
+            pushNewScore(uname, score)
+        }
+
+        recordSpan.innerHTML = localStorage.pr
+    }
+
+    const restart = e => {
+        startGame()
+        canvas.removeEventListener('click', restart)
+    }
+
+    canvas.addEventListener('click', restart)
+
 }
 
 function update_ball_positions(dt){
@@ -725,6 +770,19 @@ function move_and_collide_ball(ball,dt){
                 mincell[2]--
                 score ++
 
+                scoreSpan.innerHTML = score
+
+                scoreSpan.style.transition = 'none'
+                scoreSpan.className = 'gold'
+                
+                setTimeout(() => {
+                    scoreSpan.style.transition = '1s'
+                    scoreSpan.className = ''
+                }, 0)
+                
+
+
+
                 if(mincell[2] <= 0){
                     for (var i = 0; i < 10; i++) {
                         const { cx, cy} = get_cell_rect(...mincell)
@@ -866,9 +924,39 @@ function get_cell_rect(r,c){
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 let last
 
-requestAnimationFrame(t => {
-    last = t
-    requestAnimationFrame(tick)
-})
+
+
+//once HTML loads, grab the canvas and score elements
+window.onload = function() {
+    ctx = canvas.getContext('2d');
+    scoreSpan = document.getElementById("score")
+    scoreSpan.innerHTML = 0
+
+    recordSpan = document.getElementById("record")
+    recordSpan.innerHTML = localStorage.pr || 0
+
+    startGame()
+
+
+    requestAnimationFrame(t => {
+        last = t
+        requestAnimationFrame(tick)
+    })
+
+}

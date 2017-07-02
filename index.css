@@ -3,7 +3,6 @@ body, html {
 	/*min-height: 100vh;*/
 	height: 100%;
 	font-family: 'avenir';
-	text-align: center;
 }
 
 h1, h2, p {
@@ -42,22 +41,48 @@ h2 {
 }
 
 #canvas {
-	// border: 1px solid black;
-	// width: 100%;
-	// height: 100%;
 	width: 100%;
 	flex: 1;
 	outline: none;
 }
 
-@media (max-width: 700px) {
-	#canvas {
-		// width: 100vw;
-		// height: 50vh;
-	}
+#header {
+	background: #333;
+	display: flex;
+	align-items: center;
+}
+
+#title {
+	font-size: 200%;
+	font-weight: bold;
+	padding: 0 10px;
+}
+
+.chrome {
+	background: #444;
+	color: #ccc;
+}
+
+#score-wrap {
+	padding: 0 10px;
+}
+
+#scoreInfo {
+	display: flex;
+}
+
+#score {
+	/*transition: .5s;*/
+}
+
+.gold {
+	color: #ff0;
+}
+
+/*@media (max-width: 700px) {
 
 	#scoreInfo, #instructions {
 		display: none;
 	}
 }
-
+*/
