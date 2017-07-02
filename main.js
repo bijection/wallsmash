@@ -44,7 +44,7 @@ function startGame(){
     cells = []
     items = new Set()
 
-    for(let i = 0; i<9; i++)updateCellsForCurrentLevel()
+    for(let i = 0; i<4; i++)updateCellsForCurrentLevel()
 
 }
 // items.add([0,0,'ball'])
