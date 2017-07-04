@@ -1,8 +1,5 @@
 const pushNewScore = (username, score, callback)=>{
-  let pr = localStorage.getItem("pr")
-  if(score>pr){
-    localStorage.setItem("pr", score)
-  }
+  localStorage.pr = score
   if(!callback){ callback = function(){}}
 
   scores.push({
