@@ -76,7 +76,7 @@ function updateCellsForCurrentLevel() {
     //create new row
     const chanceOfBrick = 0.5;
     const chanceOfItem = 0.2;
-    for (i=0; i<NUM_COLS; i++) {
+    for (let i=0; i<NUM_COLS; i++) {
         if(Math.random() <= chanceOfBrick) cells.push([0, i, currentLevel]);
         else if(Math.random() <= chanceOfItem){
             if(currentLevel > 10 && currentLevel < 20) items.add([0, i, 'jitter'])
