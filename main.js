@@ -478,8 +478,8 @@ function render(t, dt){
 
 
 function gameLost(){
-    let uname = localStorage.getItem("username")
-    let pr = localStorage.getItem("pr") || 0
+    let uname = localStorage.username
+    let pr = localStorage.pr || 0
     console.log("Game state lost")
 
     if(score > pr){
@@ -492,7 +492,8 @@ function gameLost(){
             pushNewScore(uname, score)
         }
 
-        recordSpan.innerHTML = localStorage.pr
+
+        recordSpan.innerHTML = score
     }
 
     const restart = e => {
