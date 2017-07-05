@@ -1,33 +1,54 @@
 let ctx;
 let scoreSpan;
+let recordSpan;
+let score;
 
-let numRows = 0;
-let numCols = 0;
-
-let balls = []
-let game_state = 'aiming'
+let game_state;
 let mouse = {x:0, y:0}
-let ball_start_pos
-let particles = []
+let ball_start_pos, next_ball_start_pos
 
-let currentLevel = 10
-const ball_types = Array.from(new Array(10), () => 'ball')
-let num_launched_balls = 0
+let balls;
+let particles;
+let trails;
 
-const level = `..........
-....888...
-.8.88888..
-...88..88.`
+let currentLevel;
+let next_ball_types;
+let ball_types;
 
-const BALL_SPEED = 1200
+let ball_speed = 1200
+
 const BALL_RADIUS = 10
 const MIN_ANGLE = Math.PI/12
 const NUM_ROWS = 10
 const NUM_COLS = 10
 
-const cells = []
-const items = new Set()
+const NORMAL_COLOR = '#48f'
+const JITTER_COLOR = '#691c7e'
+
+let cells = []
+let items = new Set()
+
+
+function startGame(){
+    game_state = 'aiming'
+    
+    currentLevel = 2
+    next_ball_types = Array.from(new Array(currentLevel-1), () => 'ball')
+    ball_types = Array.from(next_ball_types)
+
+    balls = []
+    particles = []
+    trails = []
+
+    score = 0
+    cells = []
+    items = new Set()
+
+    for(let i = 0; i<4; i++)updateCellsForCurrentLevel()
+
+}
 // items.add([0,0,'ball'])
+
 
 // level
 // .split('\n')
@@ -55,19 +76,14 @@ function updateCellsForCurrentLevel() {
     //create new row
     const chanceOfBrick = 0.5;
     const chanceOfItem = 0.2;
-    for (i=0; i<NUM_COLS; i++) {
+    for (let i=0; i<NUM_COLS; i++) {
         if(Math.random() <= chanceOfBrick) cells.push([0, i, currentLevel]);
         else if(Math.random() <= chanceOfItem){
-            if(Math.random() < .5) items.add([0, i, 'jitter'])
+            if(currentLevel > 10 && currentLevel < 20) items.add([0, i, 'jitter'])
             else items.add([0, i, 'ball'])
         }
     }
 }
-
-updateCellsForCurrentLevel()
-updateCellsForCurrentLevel()
-updateCellsForCurrentLevel()
-updateCellsForCurrentLevel()
 
 function tick(t){
     frame_number++
@@ -76,66 +92,81 @@ function tick(t){
     last = t
     requestAnimationFrame(tick)
 
-    canvas.width = innerWidth * 1.5
-    canvas.height = innerHeight * 1.5
+    // if(innerWidth < 700) {
+    //     canvas.width = innerWidth * 2
+    //     canvas.height = innerHeight
+    // } else {
+    //     canvas.width = innerWidth * 1.5
+    //     canvas.height = innerHeight * 1.5
+    // }
+    const {width, height} = document.getElementById('canvas-wrap').getBoundingClientRect()
+    
+    canvas.width = width * 2
+    canvas.height = height * 2
+
+    ball_speed = 1200 + canvas.width / 10
 
     ctx.clearRect(0,0, canvas.width, canvas.height)
 
 
-
-
-    render(t, dt)
     update_ball_positions(dt)
     update_particles(dt)
+    render(t, dt)
+
+
 
     if(game_state === 'playing'){
 
-        if(num_launched_balls < ball_types.length) {
+        if(ball_types.length) {
 
-            let type = ball_types[num_launched_balls]
-            num_launched_balls++
 
-            if(type === 'ball'){
-                let launch_angle = get_launch_angle()
+            if(frame_number % 3 == 0){
+                let type = ball_types.shift()
 
-                const r = BALL_RADIUS
-                const x = ball_start_pos || canvas.width / 2
-                const y = canvas.height - r
+                if(type === 'ball'){
+                    let launch_angle = get_launch_angle()
 
-                balls.push({
-                    //this is a thing for finding nans
-                    // _x: x,
-                    // set x(n){
-                    //     if(isNaN(n)) throw n
-                    //     this._x = n
-                    // },
-                    // get x(){
-                    //     return this._x
-                    // },
-                    x,
-                    y,
-                    vx:Math.cos(launch_angle) * BALL_SPEED, // cos(theta)
-                    vy:-1*Math.sin(launch_angle) * BALL_SPEED, // sin(theta)
-                    r,
-                    type
-                })
+                    const r = BALL_RADIUS
+                    const x = ball_start_pos || canvas.width / 2
+                    const y = canvas.height - r
 
-            } else if(type === 'jitter'){
-                let launch_angle = get_launch_angle(.1)
+                    balls.push({
+                        // this is a thing for finding nans
+                        // _x: x,
+                        // set x(n){
+                        //     if(isNaN(n)) throw n
+                        //     this._x = n
+                        // },
+                        // get x(){
+                        //     return this._x
+                        // },
+                        x,
+                        y,
+                        vx:Math.cos(launch_angle) * ball_speed, // cos(theta)
+                        vy:-1*Math.sin(launch_angle) * ball_speed, // sin(theta)
+                        r,
+                        type
+                    })
 
-                const r = BALL_RADIUS
-                const x = ball_start_pos || canvas.width / 2
-                const y = canvas.height - r
+                } else if(type === 'jitter'){
+                    let launch_angle = get_launch_angle(Math.sin(ball_types.length / 8 * Math.PI) *Math.PI / 100)
 
-                balls.push({
-                    x,
-                    y,
-                    vx:Math.cos(launch_angle) * BALL_SPEED, // cos(theta)
-                    vy:-1*Math.sin(launch_angle) * BALL_SPEED, // sin(theta)
-                    r,
-                    type
-                })
+                    const r = BALL_RADIUS
+                    const x = ball_start_pos || canvas.width / 2
+                    const y = canvas.height - r
+
+                    balls.push({
+                        x,
+                        y,
+                        vx:Math.cos(launch_angle) * ball_speed, // cos(theta)
+                        vy:-1*Math.sin(launch_angle) * ball_speed, // sin(theta)
+                        r,
+                        type
+                    })
+                }
+
             }
+
 
         } else {
             if(balls.every(ball => ball.gathered)) {
@@ -143,11 +174,11 @@ function tick(t){
 
                 //update to next level
                 currentLevel++;
-                scoreSpan.innerHTML = String(currentLevel)
 
                 //change game state
                 game_state = 'aiming'
-                num_launched_balls = 0
+                ball_start_pos = next_ball_start_pos
+                ball_types = Array.from(next_ball_types)
 
                 //potentially set game_state to 'lost'
                 updateCellsForCurrentLevel()
@@ -158,9 +189,9 @@ function tick(t){
         .filter(ball => ball.done)
         .forEach(ball => {
             // console.log(ball_start_pos, ball.x, ball.gather_dir)
-            const d = ball_start_pos - ball.x
+            const d = next_ball_start_pos - ball.x
             if(Math.abs(d) < 1e-8 || d / ball.gather_dir < 0) {
-                ball.x = ball_start_pos
+                ball.x = next_ball_start_pos
                 ball.vx = 0
                 ball.gathered = true
                 // console.log('gathered', ball)
@@ -221,14 +252,27 @@ document.ontouchstart = function(e){
     }
 }
 
-//once HTML loads, grab the canvas and score elements
-window.onload = function() {
-    ctx = canvas.getContext('2d');
-    scoreSpan = document.getElementById("score")
-    scoreSpan.innerHTML = String(currentLevel)
-}
 
-const get_launch_angle = (spray_angle=0)=>{
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const get_launch_angle = (da = 0)=>{
     const r = BALL_RADIUS
     const x = ball_start_pos || canvas.width / 2
     const y = canvas.height - r
@@ -236,11 +280,13 @@ const get_launch_angle = (spray_angle=0)=>{
     const dx = mouse.x - x
     const dy = mouse.y - y
 
-    let launch_angle = Math.atan2(-dy, dx) + (Math.random() - 0.5) * spray_angle
+    let launch_angle = Math.atan2(-dy, dx) + da
     if(launch_angle < -Math.PI / 2) launch_angle = Math.PI
 
-    const max_angle = Math.atan2(canvas.height / NUM_ROWS, -canvas.width)
-    const min_angle = Math.atan2(canvas.height / NUM_ROWS, canvas.width)
+    const w = canvas.width * (NUM_COLS - 1) / NUM_COLS / 2
+
+    const max_angle = Math.atan2(canvas.height / NUM_ROWS, -w)
+    const min_angle = Math.atan2(canvas.height / NUM_ROWS, w)
 
     launch_angle = Math.min(Math.max(min_angle, launch_angle), max_angle)
 
@@ -263,11 +309,27 @@ function render(t, dt){
     //     ctx.fill()
     // })
 
-    balls.forEach(({x,y,vx,vy,r,type}) => {
-        ctx.fillStyle = '#48f'
-        if(type === 'jitter') ctx.fillStyle = '#8f4'
+    ctx.strokeStyle = NORMAL_COLOR
+    ctx.lineWidth = 10
+    ctx.globalAlpha = .3
+    trails.forEach(([start, end]) => {
         ctx.beginPath()
-        ctx.arc(x, y, r , 0, Math.PI * 2)
+        ctx.moveTo(...start)
+        ctx.lineTo(...end)
+        ctx.stroke()
+    })
+    ctx.lineWidth =1
+    ctx.globalAlpha = 1
+
+    balls.forEach(({x,y,vx,vy,r,type}) => {
+        ctx.beginPath()
+        if(type === 'ball') {
+            ctx.fillStyle = NORMAL_COLOR
+            ctx.arc(x, y, r , 0, Math.PI * 2)
+        } else if(type === 'jitter') {
+            ctx.fillStyle = JITTER_COLOR
+            ctx.arc(x, y, r , 0, Math.PI * 2)
+        }
         ctx.fill()
     })
 
@@ -302,19 +364,25 @@ function render(t, dt){
 
         if(!num) return;
 
-        const { w,h, x,y} = get_cell_rect(r,c)
-        if(bang) ctx.translate((Math.random() - .5)*4, (Math.random() - .5)*4);
+        const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
+        if(bang) ctx.translate((Math.random() - .5)*10, (Math.random() - .5)*10);
 
-        ctx.fillStyle = 'rgba(' + gradient('yiorrd', 1-(num / currentLevel)) + ',1)'
+        // if(num < 50) {
+        //     ctx.fillStyle = 'rgba(' + gradient('magma', 1 - (num / 50)) + ',1)'
+        // } else {
+        //     ctx.fillStyle = 'rgba(' + gradient('magma2', ((num - 50) / Math.max(currentLevel- 49, 50))) + ',1)'
+        // }
+    
+        ctx.fillStyle = 'rgba(' + gradient('progress', num / 125) + ',1)'
         ctx.fillRect(x, y, w,h)
 
         ctx.textBaseline = 'middle'
         ctx.textAlign = 'center'
         ctx.font = '40px Avenir'
         ctx.fillStyle = 'black';
-        ctx.fillText(num, w*(c+.5), h*(r+.5)+2)
+        ctx.fillText(num, cx, cy + 2)
         ctx.fillStyle = 'white';
-        ctx.fillText(num, w*(c+.5), h*(r+.5))
+        ctx.fillText(num, cx, cy)
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
@@ -325,80 +393,122 @@ function render(t, dt){
     items.forEach(item => {
         const [r,c,type] = item
         if(type == 'ball'){
-            const { w,h, x,y} = get_cell_rect(r,c)
-            ctx.fillStyle = '#48f'
+            const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
+            ctx.fillStyle = NORMAL_COLOR
             ctx.beginPath()
-            ctx.arc(x + w / 2,y + h /2, 10, 0, Math.PI*2)
+            ctx.arc(cx, cy, 10, 0, Math.PI*2)
             ctx.fill()
 
-            ctx.strokeStyle = '#48f'
+            ctx.strokeStyle = NORMAL_COLOR
             ctx.beginPath()
-            ctx.arc(x + w / 2,y + h /2, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
+            ctx.arc(cx, cy, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
             ctx.stroke()
         } else if(type == 'jitter'){
-            const { w,h, x,y} = get_cell_rect(r,c)
-            ctx.fillStyle = '#8f4'
+            const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
+            ctx.fillStyle = JITTER_COLOR
             ctx.beginPath()
-            ctx.arc(x + w / 2,y + h /2, 10, 0, Math.PI*2)
+            ctx.arc(cx, cy, 10, 0, Math.PI*2)
             ctx.fill()
 
-            ctx.strokeStyle = '#8f4'
+            ctx.strokeStyle = JITTER_COLOR
             ctx.beginPath()
-            ctx.arc(x + w / 2,y + h /2, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
+            ctx.arc(cx, cy, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
             ctx.stroke()
         }
     })
 
-    particles.forEach(({x,y,r, vx,vy, age, lifetime}) => {
+    particles.forEach(({x,y,r, vx,vy, age, lifetime, color, colormap, type}) => {
         const alpha = (1 - age/lifetime)
-        ctx.fillStyle = 'rgba(' + gradient('hotish', 1-alpha) + ',' + alpha / 3 + ')'
-        ctx.strokeStyle = 'rgba(' + gradient('hotish', 1-alpha) + ',' + alpha  + ')'
+
+        if(colormap) {
+            color = 'rgba(' + gradient(colormap, 1-alpha) + ',' + alpha  + ')'
+        } 
+
+        if(color) {
+            ctx.fillStyle = color
+            ctx.strokeStyle = color
+        }
+
         ctx.beginPath()
-        // ctx.arc(x, y, r, 0, Math.PI * 2)
-        // ctx.fill()
-        ctx.lineWidth = r
-        ctx.moveTo(x,y)
-        ctx.lineTo(x+vx /10, y + vy / 10)
-        ctx.stroke()
+        if(type === 'circle'){
+            ctx.arc(x,y,r,0,Math.PI*2)
+            ctx.fill()
+        } else {
+            // ctx.arc(x, y, r, 0, Math.PI * 2)
+            // ctx.fill()
+            ctx.lineWidth = r
+            ctx.moveTo(x,y)
+            ctx.lineTo(x+vx /10, y + vy / 10)
+            ctx.stroke()            
+        }
     })
+
     ctx.fillStyle = 'black'
 
     if (game_state === 'lost') {
-        ctx.fillStyle = 'rgba(255,255,255,.5)'
+        ctx.fillStyle = 'rgba(0,0,0,.3)'
         ctx.fillRect(0,0, canvas.width, canvas.height)
 
         ctx.textBaseline = 'middle'
         ctx.textAlign = 'center'
-        ctx.font = canvas.height / 10 + 'px Avenir'
+        const text_size = canvas.width / 15
+        ctx.font =  text_size+ 'px Avenir'
 
-        ctx.fillStyle = '#48f'
-        ctx.fillText('You Lose 😱', canvas.width / 2, canvas.height / 2)
+
+        const sadmessage = [
+            'You Lose 😱',
+            'あなたは失う 😱',
+            'Tu Perdiste 😱',
+            'أنت تفقد 😱',
+            'Tu As Perdu 😱',
+            '你输了 😱'
+        ]
+
+        ctx.fillStyle = '#f0f0f0'
+        ctx.fillText(sadmessage[Math.floor(Date.now() / 1500) % sadmessage.length], canvas.width / 2, canvas.height / 2)
+        
+        ctx.font =  '30px Avenir'
+        ctx.fillText('[tap to restart]', canvas.width / 2, canvas.height / 2 +text_size/2+20)
 
     }
 
 
 }
 
-function restartGame(){
 
-}
 
 function gameLost(){
-  let uname = localStorage.getItem("username")
-  let pr = localStorage.getItem("pr")
-  console.log("Game state lost")
-  if(!uname){
-    swalPrompt("New high score!", "Enter your username below to post your score to the leaderboard.", (uname)=>{
-      pushNewScore(uname, currentLevel, restartGame)
-    })
-  }else if(pr && currentLevel > pr){
-    swal("New high score!", currentLevel+" is your new personal record.")
-    pushNewScore(uname, currentLevel)
-  }
+
+    let uname = localStorage.username
+    let pr = localStorage.pr || 0
+    console.log("Game state lost")
+
+    if(score > pr){
+        if(!uname){
+            swalPrompt(score + ": A new high score!", "Enter your username below to post your score to the leaderboard.", (uname)=>{
+                pushNewScore(uname, score)
+            })
+        } else {
+            swal("New high score!", score+" is your new personal record.")
+            pushNewScore(uname, score)
+        }
+
+
+        recordSpan.innerHTML = score
+    }
+
+    const restart = e => {
+        startGame()
+        canvas.removeEventListener('click', restart)
+    }
+
+    canvas.addEventListener('click', restart)
+
 }
 
 function update_ball_positions(dt){
     cells.forEach(cell => cell.hit = false)
+    trails = []
 
     balls.forEach(ball => {
 
@@ -412,11 +522,11 @@ function update_ball_positions(dt){
             ball.vy = 0
 
             if(!balls.some(ball => ball.done)){
-                ball_start_pos = ball.x
+                next_ball_start_pos = Math.min(Math.max(ball.x, ball.r), canvas.width - ball.r)
                 ball.gathered = true
             } else {
-                ball.vx = (ball_start_pos - ball.x) * (2 + Math.random())
-                ball.gather_dir = (ball_start_pos - ball.x) || 1
+                ball.vx = (next_ball_start_pos - ball.x) * (2 + Math.random())
+                ball.gather_dir = (next_ball_start_pos - ball.x) || 1
             }
             ball.done = true
         }
@@ -425,8 +535,8 @@ function update_ball_positions(dt){
         const v = Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy)
         if(v == 0) ball.gathered = true
         // if(v > 0 && !ball.done){
-        //     ball.vx *= BALL_SPEED / v
-        //     ball.vy *= BALL_SPEED / v
+        //     ball.vx *= ball_speed / v
+        //     ball.vy *= ball_speed / v
         // }
     })
 }
@@ -457,15 +567,20 @@ function update_particles(dt){
 
 function move_and_collide_ball(ball,dt){
 
+    const radius = ball.r
 
-    const {r} = ball
 
     const v = Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy)
     let distance_left = v * dt
     while(distance_left > 0) {
+
         const [vx,vy] = unit([ball.vx, ball.vy])
+        const inv = [1/vx, 1/vy]
+        
         const start = [ball.x, ball.y]
         const end = [ball.x + vx * distance_left, ball.y + vy * distance_left]
+        
+        if(isNaN(end[0])) throw 'walp'
 
         let mind = Infinity
         let minp;
@@ -473,13 +588,13 @@ function move_and_collide_ball(ball,dt){
         let normal;
 
         const walls = [
-            [[0,0], [0, canvas.height]],
+            [[radius,0], [radius, canvas.height - radius]],
                 // [[0, canvas.height], [canvas.width, canvas.height]],
-            [[canvas.width, canvas.height], [canvas.width, 0]],
-            [[canvas.width, 0], [0,0]],
+            [[canvas.width - radius, canvas.height - radius], [canvas.width - radius, radius]],
+            [[canvas.width - radius, radius], [radius,radius]],
         ]
 
-        if(!ball.done) walls.forEach(wall => {
+        if(!ball.done && !ball.falling) walls.forEach(wall => {
 
             const hit = intersection(start, minus(start, end), wall[0], minus(wall[1], wall[0]))
             if(hit && !equal(hit, start) && between(hit, start, end) && between(hit, wall[0], wall[1])) {
@@ -493,11 +608,25 @@ function move_and_collide_ball(ball,dt){
             }
         })
 
-        if(!ball.done) cells.forEach(cell => {
+        if(!ball.done && !ball.falling) cells.forEach(cell => {
             const [r,c,num] = cell
             if(num <= 0) return;
 
-            const {x,y,w,h} = get_cell_rect(r,c)
+            const rect = get_cell_rect(r,c)
+
+            const hit = box_ray_intersection({
+                x: rect.x - radius,
+                y: rect.y - radius,
+                w: rect.w + radius * 2,
+                h: rect.h + radius * 2,
+            }, start, inv, distance_left)
+
+            // console.log(hit)
+            // console.log(r,c,hit)
+
+            if(!hit) return;
+
+            const {x,y,w,h} = rect
 
             const arcs = [
                 [x, y],
@@ -507,14 +636,30 @@ function move_and_collide_ball(ball,dt){
             ]
 
             const segs = [
-                [[x, y - r], [x + w, y - r]],
-                [[x + w + r, y], [x + w + r, y + h]],
-                [[x + w, y + h + r], [x, y + h + r]],
-                [[x - r, y + h], [x - r, y ]],
+                [[x, y - radius], [x + w, y - radius]],
+                [[x + w + radius, y], [x + w + radius, y + h]],
+                [[x + w, y + h + radius], [x, y + h + radius]],
+                [[x - radius, y + h], [x - radius, y ]],
             ]
 
+
+            segs.forEach(s => {
+
+                const hit = intersection(start, minus(start, end), s[0], minus(s[1], s[0]))
+                if(hit && !equal(hit, start) && between(hit, start, end) && between(hit, s[0], s[1])) {
+                    const d = dist2(start, hit)
+                    if(d < mind){
+                        mind = d
+                        minp = hit
+                        normal = unit(cross(s[0], s[1]))
+                        mincell = cell
+                    }
+                }
+
+            })
+
             arcs.forEach(a => {
-                const hit = lineCircleIntersection(start, end, a, r)
+                const hit = lineCircleIntersection(start, end, a, radius)
 
                 if(hit){
                     const [h1, h2] = hit
@@ -534,61 +679,41 @@ function move_and_collide_ball(ball,dt){
                 }
             })
 
-
-            segs.forEach(s => {
-
-                const hit = intersection(start, minus(start, end), s[0], minus(s[1], s[0]))
-                if(hit && !equal(hit, start) && between(hit, start, end) && between(hit, s[0], s[1])) {
-                    const d = dist2(start, hit)
-                    if(d < mind){
-                        mind = d
-                        minp = hit
-                        normal = unit(cross(s[0], s[1]))
-                        mincell = cell
-                    }
-                }
-            })
         })
+
 
         items.forEach(item => {
             const [r,c,type] = item
-            const {w,h,x,y} = get_cell_rect(r,c)
+            const {cx, cy} = get_cell_rect(r,c)
             const hit_dist = ball.r + 30
-            if(dist2([ball.x, ball.y], [x+w/2, y + h/2]) < hit_dist*hit_dist){
+            if(dist2([ball.x, ball.y], [cx, cy]) < hit_dist*hit_dist){
                 items.delete(item)
+
                 if(type === 'ball') {
 
-                    ball_types.push('ball')
-
-                    if(!balls.some(ball => ball.done)){
-                        ball_start_pos = x+w/2
-                    }
+                    next_ball_types.push('ball')
 
                     balls.push({
-                        x: x+w/2,
-                        y: y + h/2,
+                        x: cx,
+                        y: cy,
                         vx:0, // cos(theta)
-                        vy:BALL_SPEED, // sin(theta)
+                        vy:ball_speed, // sin(theta)
                         r: BALL_RADIUS,
-                        done: true,
+                        falling: true,
                         type: 'ball'
                     })
 
                 } else if(type === 'jitter') {
 
-                    ball_types.push('jitter')
-
-                    if(!balls.some(ball => ball.done)){
-                        ball_start_pos = x+w/2
-                    }
+                    next_ball_types.push('jitter')
 
                     balls.push({
-                        x: x+w/2,
-                        y: y + h/2,
+                        x: cx,
+                        y: cy,
                         vx:0, // cos(theta)
-                        vy:BALL_SPEED, // sin(theta)
+                        vy:ball_speed, // sin(theta)
                         r: BALL_RADIUS,
-                        done: true,
+                        falling: true,
                         type: 'jitter'
                     })
 
@@ -601,8 +726,10 @@ function move_and_collide_ball(ball,dt){
 
 
 
-            const bounce = 2* dot(minus(end, start), normal)
-            const newv = scale(unit(minus(minus(end, start), scale(normal, bounce))), v)
+            const bounce = dot(minus(end, start), normal)
+            const newv = scale(unit(minus(minus(end, start), scale(normal, 2*bounce))), v)
+            
+            const pv = scale(unit(minus(minus(end, start), scale(normal, (1+Math.random())*bounce))), v*Math.random())
 
             // const d = dist(end, start) -
 
@@ -615,26 +742,66 @@ function move_and_collide_ball(ball,dt){
             distance_left -= dist(minp, start)
 
             if(mincell){
+
+                addParticle({
+                    vx: pv[0],
+                    vy: pv[1],
+                    vr: 100,
+                    f: .1,
+                    x : minp[0],
+                    y : minp[1],
+                    r : 1,
+                    lifetime: Math.random(),
+                    color: 'rgba(' + gradient('progress', mincell[2] / 125) + ',1)'
+                })
+
+                // addParticle({
+                //     vx: (canvas.width/2 + 40 - ball.x) * 3,
+                //     vy: - (ball.y) * 3,
+                //     vr: 0,
+                //     f: 0,
+                //     x : ball.x,
+                //     y : ball.y,
+                //     r : 10,
+                //     lifetime: 3,
+                //     color: 'rgba(' + gradient('progress', mincell[2] / 125) + ',1)',
+                //     type: 'circle'
+                // })
+
                 mincell.hit = true
                 mincell[2]--
+                score ++
+
+                scoreSpan.innerHTML = score
+
+                scoreSpan.style.transition = 'none'
+                scoreSpan.className = 'gold'
+                
+                setTimeout(() => {
+                    scoreSpan.style.transition = '1s'
+                    scoreSpan.className = ''
+                }, 0)
+                
+
+
+
                 if(mincell[2] <= 0){
                     for (var i = 0; i < 10; i++) {
-                        const { w,h, x,y} = get_cell_rect(...mincell)
+                        const { cx, cy} = get_cell_rect(...mincell)
                         const a = Math.random() * 2 * Math.PI
                         const v = Math.random()
-                        particles.push({
-                            ax: 0,
-                            ay: 0,
-                            ar: 0,
+                        addParticle({
                             vx: Math.cos(a)*1000 *v,
                             vy: Math.sin(a)*1000 *v,
                             vr: 100,
                             f: .1,
-                            x : x + w/ 2,
-                            y : y + h / 2,
+                            x : cx,
+                            y : cy,
                             r : 1,
-                            lifetime: Math.random()
+                            lifetime: Math.random(),
+                            color: '#ddd'
                         })
+
                     }
                 }
             }
@@ -645,14 +812,27 @@ function move_and_collide_ball(ball,dt){
             distance_left = 0
         }
 
-        // ctx.beginPath()
-        // ctx.moveTo(...start)
-        // ctx.lineTo(ball.x, ball.y)
-        // ctx.stroke()
 
+        trails.push([start, [ball.x, ball.y]])
 
     }
 
+}
+
+function addParticle(p){
+    particles.push(Object.assign({
+        ax: 0,
+        ay: 0,
+        ar: 0,
+        vx: 0,
+        vy: 0,
+        vr: 0,
+        f: 0,
+        x : canvas.width/2,
+        y : canvas.height/2,
+        r : 10,
+        lifetime: 1
+    }, p))
 }
 
 
@@ -678,6 +858,34 @@ function lineCircleIntersection(start,end,o,r){
     return [[x + k1*a, y+k1*b], [x + k2*a, y+k2*b]]
 }
 
+function box_ray_intersection(b, [x, y], [invx, invy], length) {
+
+    const tx1 = (b.x - x)*invx;
+    const tx2 = (b.x + b.w - x)*invx;
+
+    // console.log(tx1, tx2)
+ 
+    let tmin = Math.min(tx1, tx2);
+    let tmax = Math.max(tx1, tx2);
+ 
+    // console.log(tmin, tmax)
+ 
+
+    const ty1 = (b.y - y)*invy;
+    const ty2 = (b.y + b.h - y)*invy;
+ 
+    // console.log(ty1, ty2)
+
+
+    tmin = Math.max(tmin, Math.min(ty1, ty2));
+    tmax = Math.min(tmax, Math.max(ty1, ty2));
+ 
+    // console.log(tmin, tmax)
+
+    return tmax > Math.max(tmin, 0) && tmin < length
+}
+
+// console.log(box_ray_intersection({x:0,y:0,w:10,h:10}, [15, 10], [-Math.SQRT2, -Math.SQRT2], 100))
 
 const between = ([x1,y1], [x2,y2], [x3,y3]) =>
     x1 >= Math.min(x2, x3)
@@ -713,14 +921,44 @@ const equal = ([x1, y1], [x2, y2]) => Math.abs(x1 - x2) < 1e-8 && Math.abs(y1 - 
 
 function get_cell_rect(r,c){
     const w = canvas.width / NUM_COLS, h = canvas.height / NUM_ROWS
-    return { w,h, x: w*c, y: h*r}
+    return { w,h, x: w*c, y: h*r, cx: w*(c + .5), cy: h*(r+.5)}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 let last
 
-requestAnimationFrame(t => {
-    last = t
-    requestAnimationFrame(tick)
-})
+
+
+//once HTML loads, grab the canvas and score elements
+window.onload = function() {
+    ctx = canvas.getContext('2d');
+    scoreSpan = document.getElementById("score")
+    scoreSpan.innerHTML = 0
+
+    recordSpan = document.getElementById("record")
+    recordSpan.innerHTML = localStorage.pr || 0
+
+    startGame()
+
+
+    requestAnimationFrame(t => {
+        last = t
+        requestAnimationFrame(tick)
+    })
+
+}

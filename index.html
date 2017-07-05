@@ -32,18 +32,23 @@
 
 	</head>
 	<body>
- 		<h1>GKC</h1>
-		<h2>Just about the best game you've ever seen.</h2>
+		<div class='game'>
+			<div class="chrome">
+				<div id='header'>
+			 		<div id='title'>GKC</div>
+					<div id='slogan'>The best game you've ever seen.</div>
+				</div>
 
-		<div id="scoreInfo">
-			<p>Record: <span id="record">0</span></p>
-			<p>Score: <span id="score">0</span></p>
+				<div id="scoreInfo">
+					<div id='score-wrap'>Score: <span id="score">0</span></div>
+					<div>Record: <span id="record">0</span></div>
+				</div>
+			</div>
+			<div id="canvas-wrap">
+				<canvas id="canvas" tabindex='1'></canvas>
+				<div class="skip">Force Next Turn</div>
+			</div>			
 		</div>
-
-		<div id="canvas-parent">
-			<canvas id="canvas" tabindex='1'></canvas>
-		</div>
-		<h2 id="instructions">Press the spacebar to begin!</h2>
 		<!-- <script type="text/javascript" src="test.js"></script> -->
 	</body>
 </html>
