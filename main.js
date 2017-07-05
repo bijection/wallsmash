@@ -391,7 +391,7 @@ function gameLost(){
     swalPrompt("New high score!", "Enter your username below to post your score to the leaderboard.", (uname)=>{
       pushNewScore(uname, currentLevel, restartGame)
     })
-  }else if(currentLevel > pr){
+  }else if(pr && currentLevel > pr){
     swal("New high score!", currentLevel+" is your new personal record.")
     pushNewScore(uname, currentLevel)
   }
