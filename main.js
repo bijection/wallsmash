@@ -499,10 +499,10 @@ function gameLost(){
 
     const restart = e => {
         startGame()
-        canvas.getElementById('canvas-wrap').removeEventListener('click', restart)
+        document.getElementById('canvas-wrap').removeEventListener('click', restart)
     }
 
-    canvas.getElementById('canvas-wrap').addEventListener('click', restart)
+    document.getElementById('canvas-wrap').addEventListener('click', restart)
 
 }
 
