@@ -22,21 +22,20 @@
 			var database = firebase.database();
 	    const scores = database.ref("gkc/highscore")
 		</script>
-		<script type="text/javascript" src="gradient.js"></script>
-		<script type="text/javascript" src="helper.js"></script>
-		<!-- <script type="text/javascript" src="collide.js"></script> -->
-		<script type="text/javascript" src="main.js"></script>
-
-
-
-
+		
+		
 	</head>
 	<body>
 		<div class='game'>
 			<div class="chrome">
 				<div id='header'>
-			 		<div id='title'>GKC</div>
-					<div id='slogan'>The best game you've ever seen.</div>
+					<div id='headerLeft'>
+						<div id='title'>GKC</div>
+						<div id='slogan'>The best game you've ever seen.</div>
+					</div>
+					<div id='scoreboardButton'>
+						Scoreboard
+					</div>
 				</div>
 
 				<div id="scoreInfo">
@@ -50,5 +49,10 @@
 			</div>			
 		</div>
 		<!-- <script type="text/javascript" src="test.js"></script> -->
+		<script type="text/javascript" src="gradient.js"></script>
+		<script type="text/javascript" src="helper.js"></script>
+		<!-- <script type="text/javascript" src="collide.js"></script> -->
+		<script type="text/javascript" src="main.js"></script>
+		<script type="text/javascript" src="scoreboard.js"></script>
 	</body>
 </html>

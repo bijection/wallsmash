@@ -8,6 +8,12 @@ const pushNewScore = (username, score, callback)=>{
   }, callback)
 }
 
+const getTopScores = (callback)=>{
+  scores.orderByChild("score").limitToLast(100).once('value',function(snapshot){
+    callback(snapshot)
+  })
+}
+
 const swalPrompt = (title, text, callback)=>{
   swal({
     title: title || "",

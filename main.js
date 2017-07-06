@@ -229,7 +229,7 @@ function shoot() {
     }
 }
 
-document.addEventListener('mousemove', e => {
+document.getElementById('canvas-wrap').addEventListener('mousemove', e => {
     if(game_state != 'aiming') return;
     var rect = canvas.getBoundingClientRect();
     mouse = {
@@ -239,11 +239,11 @@ document.addEventListener('mousemove', e => {
 })
 
 //for desktop: spacebar or mousedown to fire
-document.addEventListener('keydown', keyPressed, true);
-document.addEventListener('mousedown', shoot, true);
+document.getElementById('canvas-wrap').addEventListener('keydown', keyPressed, true);
+document.getElementById('canvas-wrap').addEventListener('mousedown', shoot, true);
 //for mobile: touchmove to pan around, touchend to fire
-document.addEventListener('touchmove', touchMoved, true);
-document.addEventListener('touchend', shoot, true);
+document.getElementById('canvas-wrap').addEventListener('touchmove', touchMoved, true);
+document.getElementById('canvas-wrap').addEventListener('touchend', shoot, true);
 
 //prevent scrolling on touchscreen
 document.ontouchstart = function(e){
@@ -499,10 +499,10 @@ function gameLost(){
 
     const restart = e => {
         startGame()
-        canvas.removeEventListener('click', restart)
+        canvas.getElementById('canvas-wrap').removeEventListener('click', restart)
     }
 
-    canvas.addEventListener('click', restart)
+    canvas.getElementById('canvas-wrap').addEventListener('click', restart)
 
 }
 

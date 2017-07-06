@@ -50,12 +50,25 @@ h2 {
 	background: #333;
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
+}
+
+#headerLeft {
+	display:flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center
 }
 
 #title {
 	font-size: 200%;
 	font-weight: bold;
 	padding: 0 10px;
+}
+
+#scoreboardButton{
+	padding: 0 10px;
+	cursor:pointer;	
 }
 
 .chrome {
@@ -79,6 +92,9 @@ h2 {
 	color: #ff0;
 }
 
+table tr:nth-child(even) td{
+	background-color: lightgrey;
+}
 /*@media (max-width: 700px) {
 
 	#scoreInfo, #instructions {
