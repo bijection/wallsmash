@@ -251,7 +251,13 @@ document.ontouchstart = function(e){
         e.preventDefault();
     }
 }
-
+end_button.addEventListener('click', e => {
+    balls.forEach(ball => {
+        ball.vx = 0
+        ball.vy = ball_speed
+        ball.falling = true
+    })
+})
 
 
 

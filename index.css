@@ -76,6 +76,16 @@ h2 {
 	color: #ccc;
 }
 
+.spacer {
+	flex:1
+}
+
+.button {
+    background: rgba(255, 255, 255, 0.13);
+    padding: 0 10px;
+    cursor: pointer;
+}
+
 #score-wrap {
 	padding: 0 10px;
 }
