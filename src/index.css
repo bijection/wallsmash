@@ -71,6 +71,11 @@ h2 {
 	cursor:pointer;	
 }
 
+#scoreTable {
+	max-height: 300px;
+	overflow: scroll;
+}
+
 .chrome {
 	background: #444;
 	color: #ccc;
@@ -97,6 +102,17 @@ h2 {
 #score {
 	/*transition: .5s;*/
 }
+
+#username {
+    border: 0;
+    background: rgb(92, 92, 92);
+    outline: none;
+    color: inherit;
+    font-size: inherit;
+    font-family: inherit;
+    padding: 0;
+}
+
 
 .gold {
 	color: #ff0;

@@ -1,9 +1,20 @@
+import swal from 'sweetalert2'
+import 'sweetalert2/dist/sweetalert2.css'
+
+import './scoreboard'
+
+import gradient from './gradient'
+import scores from './scores'
+
+import './index.css'
+
 let ctx;
 let scoreSpan;
 let recordSpan;
 let score;
 
 let game_state;
+let last_level_end;
 let mouse = {x:0, y:0}
 let ball_start_pos, next_ball_start_pos
 
@@ -15,7 +26,7 @@ let currentLevel;
 let next_ball_types;
 let ball_types;
 
-let ball_speed = 1200
+let ball_speed;
 
 const BALL_RADIUS = 10
 const MIN_ANGLE = Math.PI/12
@@ -24,6 +35,9 @@ const NUM_COLS = 10
 
 const NORMAL_COLOR = '#48f'
 const JITTER_COLOR = '#691c7e'
+
+const STARS_IM = new Image()
+STARS_IM.src = './stars.png'
 
 let cells = []
 let items = new Set()
@@ -41,8 +55,10 @@ function startGame(){
     trails = []
 
     score = 0
+    scoreSpan.innerHTML = score
     cells = []
     items = new Set()
+    ball_start_pos = undefined
 
     for(let i = 0; i<4; i++)updateCellsForCurrentLevel()
 
@@ -181,6 +197,8 @@ function tick(t){
                 ball_types = Array.from(next_ball_types)
 
                 //potentially set game_state to 'lost'
+                game_state='levelup'
+                last_level_end = t
                 updateCellsForCurrentLevel()
             }
         }
@@ -230,7 +248,7 @@ function shoot() {
 }
 
 document.getElementById('canvas-wrap').addEventListener('mousemove', e => {
-    if(game_state != 'aiming') return;
+    if(!(game_state === 'aiming' || game_state == "levelup") ) return;
     var rect = canvas.getBoundingClientRect();
     mouse = {
         x: (e.clientX - rect.left) * 2,
@@ -299,22 +317,8 @@ const get_launch_angle = (da = 0)=>{
     return launch_angle
 }
 
-function render(t, dt){
-
-    //supposed to be motion trails
-    // this works bad for some reason
-    // ctx.fillStyle = 'rgba(0,0,255,.3)'
-    // balls.forEach(({x,y,vx,vy,r}) => {
-    //     const v = Math.sqrt(vx*vx + vy*vy)
-
-    //     ctx.beginPath()
-    //     ctx.moveTo(x- vx/v * 60, y - vy/v * 60)
-    //     ctx.lineTo(x+vx/v * r, y-vy/v*r)
-    //     ctx.lineTo(x-vx/v * r, y+vy/v*r)
-    //     ctx.closePath()
-    //     ctx.fill()
-    // })
-
+function draw_trails(){
+    ctx.save()
     ctx.strokeStyle = NORMAL_COLOR
     ctx.lineWidth = 10
     ctx.globalAlpha = .3
@@ -324,9 +328,10 @@ function render(t, dt){
         ctx.lineTo(...end)
         ctx.stroke()
     })
-    ctx.lineWidth =1
-    ctx.globalAlpha = 1
+    ctx.restore()
+}
 
+function draw_balls(){
     balls.forEach(({x,y,vx,vy,r,type}) => {
         ctx.beginPath()
         if(type === 'ball') {
@@ -337,65 +342,116 @@ function render(t, dt){
             ctx.arc(x, y, r , 0, Math.PI * 2)
         }
         ctx.fill()
-    })
+    })    
+}
 
+function draw_launcher(){
     const launcher_x = ball_start_pos || canvas.width / 2
     const launcher_y = canvas.height - BALL_RADIUS
-    //launcher
-
-    //if balls can be launched, display line between bottomcenter and mouse
-
     const launcher_line_length = Math.sqrt(canvas.height*canvas.height + canvas.width*canvas.width)
-    if (game_state === 'aiming') {
+    let launch_angle = get_launch_angle()
 
-        let launch_angle = get_launch_angle()
+    ctx.save();
+    ctx.strokeStyle = '#aaa'
+    ctx.beginPath();
+    ctx.setLineDash([5, 15]);
+    ctx.lineWidth=5;
+    ctx.moveTo(launcher_x, launcher_y);
+    ctx.lineTo(launcher_x + launcher_line_length*Math.cos(launch_angle), launcher_y - launcher_line_length*Math.sin(launch_angle));
+    ctx.stroke()
+    ctx.restore()
 
-        ctx.save();
-        ctx.strokeStyle = '#aaa'
-        ctx.beginPath();
-        ctx.setLineDash([5, 15]);
-        ctx.lineWidth=5;
-        ctx.moveTo(launcher_x, launcher_y);
-        ctx.lineTo(launcher_x + launcher_line_length*Math.cos(launch_angle), launcher_y - launcher_line_length*Math.sin(launch_angle));
-        ctx.stroke()
-        ctx.restore()
+    ctx.beginPath()
+    ctx.fillStyle = NORMAL_COLOR
+    ctx.arc(launcher_x, launcher_y, BALL_RADIUS, 0, Math.PI * 2)
+    ctx.fill()
+}
 
-        ctx.beginPath()
-        ctx.arc(launcher_x, launcher_y, BALL_RADIUS, 0, Math.PI * 2)
-        ctx.fill()
-    }
+function draw_cell(cell, bang){
+    const [r,c,num] = cell
 
-    function drawcell(cell, bang){
-        const [r,c,num] = cell
+    if(num <= 0) return;
 
-        if(!num) return;
-
-        const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
-        if(bang) ctx.translate((Math.random() - .5)*10, (Math.random() - .5)*10);
-
-        // if(num < 50) {
-        //     ctx.fillStyle = 'rgba(' + gradient('magma', 1 - (num / 50)) + ',1)'
-        // } else {
-        //     ctx.fillStyle = 'rgba(' + gradient('magma2', ((num - 50) / Math.max(currentLevel- 49, 50))) + ',1)'
-        // }
+    const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
     
-        ctx.fillStyle = 'rgba(' + gradient('progress', num / 125) + ',1)'
-        ctx.fillRect(x, y, w,h)
+    const bx = bang ? (Math.random() - .5)*10 : 0
+    const by = bang ? (Math.random() - .5)*10 : 0
 
-        ctx.textBaseline = 'middle'
-        ctx.textAlign = 'center'
-        ctx.font = '40px Avenir'
-        ctx.fillStyle = 'black';
-        ctx.fillText(num, cx, cy + 2)
-        ctx.fillStyle = 'white';
-        ctx.fillText(num, cx, cy)
+    // if(num < 50) {
+    //     ctx.fillStyle = 'rgba(' + gradient('magma', 1 - (num / 50)) + ',1)'
+    // } else {
+    //     ctx.fillStyle = 'rgba(' + gradient('magma2', ((num - 50) / Math.max(currentLevel- 49, 50))) + ',1)'
+    // }
 
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = 'rgba(' + gradient('progress', num / 125) + ',1)'
+    ctx.fillRect(x + bx, y + by, w,h)
+
+    // if(num > 125){
+    //     ctx.globalAlpha = (num - 125) / 50
+    //     ctx.drawImage(STARS_IM, x,y,w,h)
+    //     ctx.globalAlpha = (num - 125) / 50
+
+    //     // ctx.lineWidth = 10
+    //     // ctx.strokeRect(x + bx, y + by, w, h)
+    // }
+
+    if(num > 130){
+        const d = Math.min((num - 130)/60,1)
+        if(Math.random() < d / 10){
+            const size = (d * 10) + 2
+            addParticle({
+                type: 'circle',
+                x: x + Math.random()*w,
+                y: y + Math.random()*h,
+                lifetime: 3,
+                color: 'rgba('+gradient('stars', d)+',1)',
+                fade: true,
+                // endColor: [255,255,255,1],
+                // vr: -10,
+                r: 3*Math.random()
+            })
+        }
     }
 
-    cells.forEach(c => drawcell(c))
-    cells.filter(cell=>cell.hit).forEach(c => drawcell(c, true))
+    //     const sparkles = Math.floor(d * 10)
 
+    //     ctx.fillStyle = '#fff'
+    //     for (var i = 0; i < sparkles; i++) {
+    //         const dx = ((r*3+c*7+i*13) % 11) / 11
+    //         const dy = ((r*5+c*7+i*3) % 11) / 11
+
+    //         ctx.beginPath()
+    //         ctx.arc(x+w*dx, y + h *dy, dy * 10, 0, Math.PI*2)
+    //         ctx.fill()
+    //     }
+
+
+
+    //     // const sparkles = Math.floor( Math.random() * r * 50)
+    //     // ctx.fillStyle = 'rgba(255,255,255,1)'
+    //     // for (var i = 0; i < sparkles; i++) {
+    //     //     // ctx.beginPath()
+    //     //     // ctx.arc(x+w*Math.random(), y + h *Math.random(), w / 50 * r * Math.random(), 0, Math.PI*2)
+    //     //     // ctx.fill()
+    //     // }
+    // }
+
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
+    ctx.font = '40px Avenir'
+    ctx.fillStyle = 'black';
+    ctx.fillText(num, cx + bx, cy + by + 2)
+
+    ctx.fillStyle = 'white';
+    ctx.fillText(num, cx + bx, cy + by)
+}
+
+function draw_cells(){
+    cells.forEach(c => draw_cell(c))
+    cells.filter(cell=>cell.hit).forEach(c => draw_cell(c, true))
+}
+
+function draw_items(t){
     items.forEach(item => {
         const [r,c,type] = item
         if(type == 'ball'){
@@ -422,12 +478,16 @@ function render(t, dt){
             ctx.stroke()
         }
     })
+}
 
-    particles.forEach(({x,y,r, vx,vy, age, lifetime, color, colormap, type}) => {
-        const alpha = (1 - age/lifetime)
+function draw_particles(){
+
+    particles.forEach(({x,y,r, vx,vy, age, lifetime, text, color, fade, startColor, endColor, colormap, type}) => {
+        const alpha = Math.max(1 - age/lifetime, 0)
+        if(fade) ctx.globalAlpha = alpha
 
         if(colormap) {
-            color = 'rgba(' + gradient(colormap, 1-alpha) + ',' + alpha  + ')'
+            color = 'rgba(' + gradient(colormap, 1-alpha) + ',1)'
         } 
 
         if(color) {
@@ -435,47 +495,86 @@ function render(t, dt){
             ctx.strokeStyle = color
         }
 
-        ctx.beginPath()
-        if(type === 'circle'){
+
+        if(type === 'text'){
+            ctx.font = r+'px Avenir'
+            ctx.fillText(text, x, y)
+        } else if(type === 'circle'){
+            ctx.beginPath()
             ctx.arc(x,y,r,0,Math.PI*2)
             ctx.fill()
         } else {
             // ctx.arc(x, y, r, 0, Math.PI * 2)
             // ctx.fill()
+            ctx.beginPath()
             ctx.lineWidth = r
             ctx.moveTo(x,y)
             ctx.lineTo(x+vx /10, y + vy / 10)
-            ctx.stroke()            
+            ctx.stroke()
         }
-    })
 
-    ctx.fillStyle = 'black'
+        ctx.globalAlpha = 1
+    })
+}
+
+function draw_lost_screen(){
+    ctx.fillStyle = 'rgba(0,0,0,.3)'
+    ctx.fillRect(0,0, canvas.width, canvas.height)
+
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
+    const text_size = canvas.width / 15
+    ctx.font =  text_size+ 'px Avenir'
+
+
+    const sadmessage = [
+        'You Lose 😱',
+        'あなたは失う 😱',
+        'Tu Perdiste 😱',
+        'أنت تفقد 😱',
+        'Tu As Perdu 😱',
+        '你输了 😱'
+    ]
+
+    ctx.fillStyle = '#f0f0f0'
+    ctx.fillText(sadmessage[Math.floor(Date.now() / 1500) % sadmessage.length], canvas.width / 2, canvas.height / 2)
+    
+    ctx.font =  '30px Avenir'
+    ctx.fillText('[tap to restart]', canvas.width / 2, canvas.height / 2 +text_size/2+20)
+}
+
+function render(t, dt){
+
+    draw_trails()
+    draw_balls()
+
+    if (game_state === 'aiming') {
+        //if balls can be launched, display line between bottomcenter and mouse
+        draw_launcher()
+    }
+
+    if(game_state == 'levelup'){
+        draw_launcher()
+
+        const total = -get_cell_rect(0,0).h
+
+        const dt = t - last_level_end
+        const v = -1
+        const d = v * dt
+
+        const r = d/total
+        
+        // if(r < 1) ctx.translate(0, total * (1-ease(r)))
+        if(r < 1) ctx.translate(0, total * (1-r))
+        else game_state = 'aiming'
+    }
+
+    draw_cells()
+    draw_items(t)
+    draw_particles()
 
     if (game_state === 'lost') {
-        ctx.fillStyle = 'rgba(0,0,0,.3)'
-        ctx.fillRect(0,0, canvas.width, canvas.height)
-
-        ctx.textBaseline = 'middle'
-        ctx.textAlign = 'center'
-        const text_size = canvas.width / 15
-        ctx.font =  text_size+ 'px Avenir'
-
-
-        const sadmessage = [
-            'You Lose 😱',
-            'あなたは失う 😱',
-            'Tu Perdiste 😱',
-            'أنت تفقد 😱',
-            'Tu As Perdu 😱',
-            '你输了 😱'
-        ]
-
-        ctx.fillStyle = '#f0f0f0'
-        ctx.fillText(sadmessage[Math.floor(Date.now() / 1500) % sadmessage.length], canvas.width / 2, canvas.height / 2)
-        
-        ctx.font =  '30px Avenir'
-        ctx.fillText('[tap to restart]', canvas.width / 2, canvas.height / 2 +text_size/2+20)
-
+        draw_lost_screen()
     }
 
 
@@ -489,18 +588,29 @@ function gameLost(){
     let pr = localStorage.pr || 0
     console.log("Game state lost")
 
-    if(score > pr){
-        if(!uname){
-            swalPrompt(score + ": A new high score!", "Enter your username below to post your score to the leaderboard.", (uname)=>{
-                pushNewScore(uname, score)
-            })
-        } else {
-            swal("New high score!", score+" is your new personal record.")
-            pushNewScore(uname, score)
-        }
 
-
+    if(score > pr) {
         recordSpan.innerHTML = score
+        localStorage.pr = score
+        swal({
+            title: "New high score!",
+            text: score+" is your new personal record.",
+            input: 'text',
+            inputPlaceholder: 'Nickname for Leaderboard',
+            inputValue: localStorage.username || "",
+            showCancelButton: true,
+            confirmButtonText: "Submit",
+            inputValidator: value => new Promise(
+                (resolve, reject) => value 
+                    ? resolve()
+                    : reject('You need to write something!')
+            )
+        }).then(username => {
+            localStorage.username = username            
+            scores.push({username, score})
+        }).catch(e => {
+            console.warn(e)
+        })
     }
 
     const restart = e => {
@@ -565,6 +675,7 @@ function update_particles(dt){
 
         if(p.r < 0) return;
         p.age += dt
+
         new_particles.push(p)
     })
     particles = new_particles
@@ -698,15 +809,27 @@ function move_and_collide_ball(ball,dt){
                 if(type === 'ball') {
 
                     next_ball_types.push('ball')
+                    const theta = (Math.random() - .5) * Math.PI * 1/16 + Math.atan2(ball.vy, ball.vx)
 
                     balls.push({
                         x: cx,
                         y: cy,
-                        vx:0, // cos(theta)
-                        vy:ball_speed, // sin(theta)
+                        vx: 0,//Math.cos(theta)*ball_speed,
+                        vy: ball_speed,//Math.sin(theta)*ball_speed, // sin(theta)
                         r: BALL_RADIUS,
                         falling: true,
                         type: 'ball'
+                    })
+
+                    addParticle({
+                        x: cx,
+                        y: cy,
+                        lifetime: .3,
+                        r: 10,
+                        vr: 200,
+                        type: 'circle',
+                        fade: true,
+                        color: NORMAL_COLOR,
                     })
 
                 } else if(type === 'jitter') {
@@ -735,7 +858,6 @@ function move_and_collide_ball(ball,dt){
             const bounce = dot(minus(end, start), normal)
             const newv = scale(unit(minus(minus(end, start), scale(normal, 2*bounce))), v)
             
-            const pv = scale(unit(minus(minus(end, start), scale(normal, (1+Math.random())*bounce))), v*Math.random())
 
             // const d = dist(end, start) -
 
@@ -748,18 +870,6 @@ function move_and_collide_ball(ball,dt){
             distance_left -= dist(minp, start)
 
             if(mincell){
-
-                addParticle({
-                    vx: pv[0],
-                    vy: pv[1],
-                    vr: 100,
-                    f: .1,
-                    x : minp[0],
-                    y : minp[1],
-                    r : 1,
-                    lifetime: Math.random(),
-                    color: 'rgba(' + gradient('progress', mincell[2] / 125) + ',1)'
-                })
 
                 // addParticle({
                 //     vx: (canvas.width/2 + 40 - ball.x) * 3,
@@ -774,9 +884,31 @@ function move_and_collide_ball(ball,dt){
                 //     type: 'circle'
                 // })
 
+                // const hits = ball.type === 'jitter'
+                //     ? (Math.random() > .1 ? 1 : 10)
+                //     : 1
+                const hits = 1
+
                 mincell.hit = true
-                mincell[2]--
-                score ++
+
+                for (var i = 0; i < hits; i++) {
+                    const pv = scale(unit(minus(minus(end, start), scale(normal, (1+Math.random())*bounce))), v*Math.random())
+                    
+                    addParticle({
+                        vx: pv[0],
+                        vy: pv[1],
+                        vr: 100,
+                        f: .1,
+                        x : minp[0],
+                        y : minp[1],
+                        r : 1,
+                        lifetime: Math.random(),
+                        color: 'rgba(' + gradient('progress', mincell[2] / 125) + ',1)'
+                    })
+
+                    mincell[2]--
+                    score ++
+                }
 
                 scoreSpan.innerHTML = score
 
@@ -923,6 +1055,9 @@ const cross = ([x1, y1], [x2, y2]) => [y2 - y1, x1 - x2]
 const dot = ([x1, y1], [x2, y2]) => x1 * x2 + y1 * y2
 const equal = ([x1, y1], [x2, y2]) => Math.abs(x1 - x2) < 1e-8 && Math.abs(y1 - y2) < 1e-8
 
+// const ease = t => (.04 - .04 / t) * Math.sin(25 * t) + 1
+// const ease = t => t<.5 ? 16*t*t*t*t*t : 1+16*(--t)*t*t*t*t 
+
 
 
 function get_cell_rect(r,c){
@@ -954,7 +1089,6 @@ let last
 window.onload = function() {
     ctx = canvas.getContext('2d');
     scoreSpan = document.getElementById("score")
-    scoreSpan.innerHTML = 0
 
     recordSpan = document.getElementById("record")
     recordSpan.innerHTML = localStorage.pr || 0
