@@ -265,10 +265,11 @@ document.getElementById('canvas-wrap').addEventListener('touchend', shoot, true)
 
 //prevent scrolling on touchscreen
 document.ontouchstart = function(e){
-    if ('ontouchstart' in document.documentElement) {
+    if (e.target === canvas) {
         e.preventDefault();
     }
 }
+
 end_button.addEventListener('click', e => {
     balls.forEach(ball => {
         ball.vx = 0
@@ -580,6 +581,7 @@ function render(t, dt){
 
 }
 
+window.swal = swal
 
 
 function gameLost(){
@@ -600,6 +602,7 @@ function gameLost(){
             inputValue: localStorage.username || "",
             showCancelButton: true,
             confirmButtonText: "Submit",
+            reverseButtons: true,
             inputValidator: value => new Promise(
                 (resolve, reject) => value 
                     ? resolve()
