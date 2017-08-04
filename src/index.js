@@ -36,9 +36,6 @@ const NUM_COLS = 10
 const NORMAL_COLOR = '#48f'
 const JITTER_COLOR = '#691c7e'
 
-const STARS_IM = new Image()
-STARS_IM.src = './stars.png'
-
 let cells = []
 let items = new Set()
 
@@ -46,7 +43,7 @@ let items = new Set()
 function startGame(){
     game_state = 'aiming'
     
-    currentLevel = 2
+    currentLevel = 1
     next_ball_types = Array.from(new Array(currentLevel-1), () => 'ball')
     ball_types = Array.from(next_ball_types)
 
@@ -122,7 +119,6 @@ function tick(t){
 
     ball_speed = 1200 + canvas.width / 10
 
-    ctx.clearRect(0,0, canvas.width, canvas.height)
 
 
     update_ball_positions(dt)
@@ -546,6 +542,21 @@ function draw_lost_screen(){
 
 function render(t, dt){
 
+    ctx.fillStyle = 'rgba('+gradient('space', (currentLevel - 120) / 20) + ',1)'
+    if(game_state == 'levelup'){
+        var total = -get_cell_rect(0,0).h
+
+        const dt = t - last_level_end
+        const v = -1
+        const d = v * dt
+
+        var r = Math.min(d/total,1)
+
+        ctx.fillStyle = 'rgba('+gradient('space', (currentLevel + (r - 1) - 120) / 20) + ',1)'
+    }
+    ctx.fillRect(0,0, canvas.width, canvas.height)
+
+
     draw_trails()
     draw_balls()
 
@@ -556,14 +567,6 @@ function render(t, dt){
 
     if(game_state == 'levelup'){
         draw_launcher()
-
-        const total = -get_cell_rect(0,0).h
-
-        const dt = t - last_level_end
-        const v = -1
-        const d = v * dt
-
-        const r = d/total
         
         // if(r < 1) ctx.translate(0, total * (1-ease(r)))
         if(r < 1) ctx.translate(0, total * (1-r))
@@ -593,7 +596,7 @@ function gameLost(){
 
     if(score > pr) {
         recordSpan.innerHTML = score
-        localStorage.pr = score
+        try{localStorage.pr = score} catch(e) {}
         swal({
             title: "New high score!",
             text: score+" is your new personal record.",
@@ -609,7 +612,7 @@ function gameLost(){
                     : reject('You need to write something!')
             )
         }).then(username => {
-            localStorage.username = username            
+            try{localStorage.username = username} catch(e) {}
             scores.push({username, score})
         }).catch(e => {
             console.warn(e)
@@ -1086,22 +1089,16 @@ function get_cell_rect(r,c){
 
 let last
 
+ctx = canvas.getContext('2d');
+scoreSpan = document.getElementById("score")
+
+recordSpan = document.getElementById("record")
+recordSpan.innerHTML = localStorage.pr || 0
+
+startGame()
 
 
-//once HTML loads, grab the canvas and score elements
-window.onload = function() {
-    ctx = canvas.getContext('2d');
-    scoreSpan = document.getElementById("score")
-
-    recordSpan = document.getElementById("record")
-    recordSpan.innerHTML = localStorage.pr || 0
-
-    startGame()
-
-
-    requestAnimationFrame(t => {
-        last = t
-        requestAnimationFrame(tick)
-    })
-
-}
+requestAnimationFrame(t => {
+    last = t
+    requestAnimationFrame(tick)
+})
