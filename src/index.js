@@ -43,7 +43,7 @@ let items = new Set()
 function startGame(){
     game_state = 'aiming'
     
-    currentLevel = 1
+    currentLevel = 2
     next_ball_types = Array.from(new Array(currentLevel-1), () => 'ball')
     ball_types = Array.from(next_ball_types)
 
