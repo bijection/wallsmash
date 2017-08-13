@@ -76,10 +76,6 @@ function updateCellsForCurrentLevel() {
     //Shift each cell down one
     cells.forEach(cell => {
         cell[0]++
-        if(cell[0] === (NUM_ROWS - 1) && cell[2] > 0) {
-          if(game_state != 'lost') gameLost()
-          game_state = 'lost'
-        }
     })
 
     items.forEach(item => {
@@ -117,7 +113,7 @@ function tick(t){
     canvas.width = width * 2
     canvas.height = height * 2
 
-    ball_speed = 1200 + canvas.width / 10
+    ball_speed = Math.max(Math.min(2000, canvas.width), 1500)
 
 
 
@@ -140,7 +136,7 @@ function tick(t){
 
                     const r = BALL_RADIUS
                     const x = ball_start_pos || canvas.width / 2
-                    const y = canvas.height - r
+                    const y = getBottom() - r
 
                     balls.push({
                         // this is a thing for finding nans
@@ -188,7 +184,6 @@ function tick(t){
                 currentLevel++;
 
                 //change game state
-                game_state = 'aiming'
                 ball_start_pos = next_ball_start_pos
                 ball_types = Array.from(next_ball_types)
 
@@ -296,7 +291,7 @@ end_button.addEventListener('click', e => {
 const get_launch_angle = (da = 0)=>{
     const r = BALL_RADIUS
     const x = ball_start_pos || canvas.width / 2
-    const y = canvas.height - r
+    const y = getBottom() - r
 
     const dx = mouse.x - x
     const dy = mouse.y - y
@@ -344,7 +339,7 @@ function draw_balls(){
 
 function draw_launcher(){
     const launcher_x = ball_start_pos || canvas.width / 2
-    const launcher_y = canvas.height - BALL_RADIUS
+    const launcher_y = getBottom() - BALL_RADIUS
     const launcher_line_length = Math.sqrt(canvas.height*canvas.height + canvas.width*canvas.width)
     let launch_angle = get_launch_angle()
 
@@ -540,21 +535,32 @@ function draw_lost_screen(){
     ctx.fillText('[tap to restart]', canvas.width / 2, canvas.height / 2 +text_size/2+20)
 }
 
-function render(t, dt){
-
+function draw_background(r){
     ctx.fillStyle = 'rgba('+gradient('space', (currentLevel - 120) / 20) + ',1)'
     if(game_state == 'levelup'){
-        var total = -get_cell_rect(0,0).h
-
-        const dt = t - last_level_end
-        const v = -1
-        const d = v * dt
-
-        var r = Math.min(d/total,1)
-
         ctx.fillStyle = 'rgba('+gradient('space', (currentLevel + (r - 1) - 120) / 20) + ',1)'
     }
     ctx.fillRect(0,0, canvas.width, canvas.height)
+}
+
+function get_level_transition_progress(t){
+    var total = -get_cell_rect(0,0).h
+
+    const dt = t - last_level_end
+    const v = -1
+    const d = v * dt
+
+    return {total, r:Math.min(d/total,1)}
+}
+
+function render(t, dt){
+
+    const {r, total} = get_level_transition_progress(t)
+    draw_background(r)
+
+    ctx.fillStyle='#eee'
+    ctx.fillRect(0,getBottom(),canvas.width, canvas.height - getBottom())
+
 
 
     draw_trails()
@@ -570,7 +576,15 @@ function render(t, dt){
         
         // if(r < 1) ctx.translate(0, total * (1-ease(r)))
         if(r < 1) ctx.translate(0, total * (1-r))
-        else game_state = 'aiming'
+        else {
+            game_state = 'aiming'
+            cells.forEach(cell => {
+                if(cell[0] === (NUM_ROWS - 1) && cell[2] > 0) {
+                  if(game_state != 'lost') gameLost()
+                  game_state = 'lost'
+                }
+            })
+        }
     }
 
     draw_cells()
@@ -637,8 +651,8 @@ function update_ball_positions(dt){
 
         move_and_collide_ball(ball, dt)
 
-        if(ball.y > canvas.height - ball.r) {
-            ball.y = canvas.height - ball.r
+        if(ball.y > getBottom() - ball.r) {
+            ball.y = getBottom() - ball.r
             // ball.vy *= -1
             ball.vx = 0
             ball.vy = 0
@@ -1067,10 +1081,14 @@ const equal = ([x1, y1], [x2, y2]) => Math.abs(x1 - x2) < 1e-8 && Math.abs(y1 - 
 
 
 function get_cell_rect(r,c){
-    const w = canvas.width / NUM_COLS, h = canvas.height / NUM_ROWS
+    const w = canvas.width / NUM_COLS, h = getBottom() / NUM_ROWS
     return { w,h, x: w*c, y: h*r, cx: w*(c + .5), cy: h*(r+.5)}
 }
 
+
+function getBottom(){
+    return canvas.height - 30
+}
 
 
 
