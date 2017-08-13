@@ -33,8 +33,8 @@ const MIN_ANGLE = Math.PI/12
 const NUM_ROWS = 10
 const NUM_COLS = 10
 
-const NORMAL_COLOR = '#48f'
-const JITTER_COLOR = '#691c7e'
+const NORMAL_COLOR = '#691c7e'
+const LASER_COLOR = '#48f'
 
 let cells = []
 let items = new Set()
@@ -44,6 +44,7 @@ function startGame(){
     game_state = 'aiming'
     
     currentLevel = 2
+    // next_ball_types = Array.from(new Array(currentLevel-1), () => Math.random() > .7 ? 'laser':'ball')
     next_ball_types = Array.from(new Array(currentLevel-1), () => 'ball')
     ball_types = Array.from(next_ball_types)
 
@@ -88,7 +89,9 @@ function updateCellsForCurrentLevel() {
     for (let i=0; i<NUM_COLS; i++) {
         if(Math.random() <= chanceOfBrick) cells.push([0, i, currentLevel]);
         else if(Math.random() <= chanceOfItem){
-            if(currentLevel > 10 && currentLevel < 20) items.add([0, i, 'jitter'])
+            if(currentLevel == 5) items.add([0, i, 'laser'])
+            else if(currentLevel > 5 && currentLevel < 15 && Math.random() > .5) items.add([0, i, 'laser'])
+            else if(currentLevel > 15 && Math.random() > .9) items.add([0, i, 'laser'])
             else items.add([0, i, 'ball'])
         }
     }
@@ -114,7 +117,6 @@ function tick(t){
     canvas.height = height * 2
 
     ball_speed = Math.max(Math.min(2000, canvas.width), 1500)
-
 
 
     update_ball_positions(dt)
@@ -156,21 +158,100 @@ function tick(t){
                         type
                     })
 
-                } else if(type === 'jitter'){
+                } else if(type === 'laser'){
                     let launch_angle = get_launch_angle(Math.sin(ball_types.length / 8 * Math.PI) *Math.PI / 100)
 
                     const r = BALL_RADIUS
                     const x = ball_start_pos || canvas.width / 2
-                    const y = canvas.height - r
+                    const y = getBottom() - r
 
-                    balls.push({
+                    // balls.push({
+                    //     x,
+                    //     y,
+                    //     vx:Math.cos(launch_angle) * ball_speed, // cos(theta)
+                    //     vy:-1*Math.sin(launch_angle) * ball_speed, // sin(theta)
+                    //     r,
+                    //     type
+                    // })
+
+                    const start = [x, y]
+                    const vx = Math.cos(launch_angle) * (canvas.width + canvas.height)
+                    const vy = -Math.sin(launch_angle) * (canvas.width + canvas.height) 
+                    const end = [x+vx, y+vy]
+
+
+
+                    cells.forEach(cell => {
+                        const [r,c,n] = cell
+
+                        if(n <= 0) return;
+
+                        const rect = get_cell_rect(r,c)
+                        const hit = box_ray_intersection(
+                            rect,
+                            start,
+                            [1/vx, 1/vy],
+                            canvas.width+canvas.height
+                        )
+
+                        if(!hit) return;
+
+                        
+                        const {x,y,w,h} = rect
+                        const segs = [
+                            [[x, y], [x + w, y]],
+                            [[x + w, y], [x + w, y + h]],
+                            [[x + w, y + h], [x, y + h]],
+                            [[x, y + h], [x, y ]],
+                        ]
+                    
+                        segs.forEach(s => {
+
+                            const hit = intersection(start, [vx,vy], s[0], minus(s[1], s[0]))
+                            if(hit && !equal(hit, start) && between(hit, start, end) && between(hit, s[0], s[1])) {
+                                addParticle({
+                                    vx,
+                                    vy,
+                                    vr: 100,
+                                    f: .1,
+                                    x : hit[0],
+                                    y : hit[1],
+                                    r : 1,
+                                    lifetime: Math.random(),
+                                    color: 'rgba(' + gradient('progress', n / 125) + ',1)'
+                                })
+                                cell[2]--
+                            }
+
+                        })
+                    })
+
+                    addParticle({
                         x,
                         y,
-                        vx:Math.cos(launch_angle) * ball_speed, // cos(theta)
-                        vy:-1*Math.sin(launch_angle) * ball_speed, // sin(theta)
-                        r,
-                        type
+                        toX: end[0],
+                        toY: end[1],
+                        r: 1, 
+                        vr: 150,
+                        fade: true,
+                        color: '#aaf',
+                        // colormap: 'yiorrd',
+                        lifetime: .2
                     })
+                    addParticle({
+                        x,
+                        y,
+                        toX: end[0],
+                        toY: end[1],
+                        r: 2, 
+                        // vr: -350,
+                        fade: true,
+                        color: '#48f',
+                        // colormap: 'yiorrd',
+                        lifetime: .2
+                    })
+
+
                 }
 
             }
@@ -183,7 +264,6 @@ function tick(t){
                 //update to next level
                 currentLevel++;
 
-                //change game state
                 ball_start_pos = next_ball_start_pos
                 ball_types = Array.from(next_ball_types)
 
@@ -329,8 +409,8 @@ function draw_balls(){
         if(type === 'ball') {
             ctx.fillStyle = NORMAL_COLOR
             ctx.arc(x, y, r , 0, Math.PI * 2)
-        } else if(type === 'jitter') {
-            ctx.fillStyle = JITTER_COLOR
+        } else if(type === 'laser') {
+            ctx.fillStyle = LASER_COLOR
             ctx.arc(x, y, r , 0, Math.PI * 2)
         }
         ctx.fill()
@@ -457,14 +537,14 @@ function draw_items(t){
             ctx.beginPath()
             ctx.arc(cx, cy, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
             ctx.stroke()
-        } else if(type == 'jitter'){
+        } else if(type == 'laser'){
             const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
-            ctx.fillStyle = JITTER_COLOR
+            ctx.fillStyle = LASER_COLOR
             ctx.beginPath()
             ctx.arc(cx, cy, 10, 0, Math.PI*2)
             ctx.fill()
 
-            ctx.strokeStyle = JITTER_COLOR
+            ctx.strokeStyle = LASER_COLOR
             ctx.beginPath()
             ctx.arc(cx, cy, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
             ctx.stroke()
@@ -474,7 +554,7 @@ function draw_items(t){
 
 function draw_particles(){
 
-    particles.forEach(({x,y,r, vx,vy, age, lifetime, text, color, fade, startColor, endColor, colormap, type}) => {
+    particles.forEach(({x,y,r, vx,vy,toX,toY, age, lifetime, text, color, fade, startColor, endColor, colormap, type}) => {
         const alpha = Math.max(1 - age/lifetime, 0)
         if(fade) ctx.globalAlpha = alpha
 
@@ -501,7 +581,8 @@ function draw_particles(){
             ctx.beginPath()
             ctx.lineWidth = r
             ctx.moveTo(x,y)
-            ctx.lineTo(x+vx /10, y + vy / 10)
+            if(typeof toX != 'undefined') ctx.lineTo(toX, toY)
+            else ctx.lineTo(x+vx /10, y + vy / 10)
             ctx.stroke()
         }
 
@@ -852,9 +933,9 @@ function move_and_collide_ball(ball,dt){
                         color: NORMAL_COLOR,
                     })
 
-                } else if(type === 'jitter') {
+                } else if(type === 'laser') {
 
-                    next_ball_types.push('jitter')
+                    next_ball_types.push('laser')
 
                     balls.push({
                         x: cx,
@@ -863,7 +944,7 @@ function move_and_collide_ball(ball,dt){
                         vy:ball_speed, // sin(theta)
                         r: BALL_RADIUS,
                         falling: true,
-                        type: 'jitter'
+                        type: 'laser'
                     })
 
                 }
@@ -904,7 +985,7 @@ function move_and_collide_ball(ball,dt){
                 //     type: 'circle'
                 // })
 
-                // const hits = ball.type === 'jitter'
+                // const hits = ball.type === 'laser'
                 //     ? (Math.random() > .1 ? 1 : 10)
                 //     : 1
                 const hits = 1
