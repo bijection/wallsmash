@@ -33,8 +33,8 @@ const MIN_ANGLE = Math.PI/12
 const NUM_ROWS = 10
 const NUM_COLS = 10
 
-const NORMAL_COLOR = '#691c7e'
-const LASER_COLOR = '#48f'
+const NORMAL_COLOR = '#48f'
+const LASER_COLOR = '#691c7e'
 
 let cells = []
 let items = new Set()
@@ -91,7 +91,7 @@ function updateCellsForCurrentLevel() {
         else if(Math.random() <= chanceOfItem){
             if(currentLevel == 5) items.add([0, i, 'laser'])
             else if(currentLevel > 5 && currentLevel < 15 && Math.random() > .5) items.add([0, i, 'laser'])
-            else if(currentLevel > 15 && Math.random() > .9) items.add([0, i, 'laser'])
+            else if(currentLevel > 15 && Math.random() > .95) items.add([0, i, 'laser'])
             else items.add([0, i, 'ball'])
         }
     }
@@ -246,7 +246,7 @@ function tick(t){
                         r: 2, 
                         // vr: -350,
                         fade: true,
-                        color: '#48f',
+                        color: LASER_COLOR,
                         // colormap: 'yiorrd',
                         lifetime: .2
                     })
