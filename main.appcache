@@ -1,0 +1,5 @@
+CACHE MANIFEST
+# this is a stub to stop 'manifest missing' errors
+# in the dev server
+NETWORK:
+*

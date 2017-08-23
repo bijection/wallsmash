@@ -274,20 +274,6 @@ function tick(t){
             }
         }
 
-        balls
-        .filter(ball => ball.done)
-        .forEach(ball => {
-            // console.log(ball_start_pos, ball.x, ball.gather_dir)
-            const d = next_ball_start_pos - ball.x
-            if(Math.abs(d) < 1e-8 || d / ball.gather_dir < 0) {
-                ball.x = next_ball_start_pos
-                ball.vx = 0
-                ball.gathered = true
-                // console.log('gathered', ball)
-            }
-        })
-
-
     }
 }
 
@@ -337,6 +323,7 @@ document.getElementById('canvas-wrap').addEventListener('touchend', shoot, true)
 //prevent scrolling on touchscreen
 document.ontouchstart = function(e){
     if (e.target === canvas) {
+        console.log('preventing scroll')
         e.preventDefault();
     }
 }
@@ -540,13 +527,27 @@ function draw_items(t){
         } else if(type == 'laser'){
             const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
             ctx.fillStyle = LASER_COLOR
-            ctx.beginPath()
-            ctx.arc(cx, cy, 10, 0, Math.PI*2)
-            ctx.fill()
+            // ctx.beginPath()
+            // ctx.arc(cx, cy, 10, 0, Math.PI*2)
+            // ctx.fill()
+            ctx.fillRect(cx - 5, cy - 10, 10, 20)
+
 
             ctx.strokeStyle = LASER_COLOR
             ctx.beginPath()
             ctx.arc(cx, cy, 20 + 5*Math.sin(t / 300), 0, Math.PI*2)
+            // const sides = 10
+
+            // let a = Math.random() * Math.PI * 2
+            // const start_r = Math.sin(t / 1000) * 5 + 20//Math.random() * 10 + 20
+            // ctx.moveTo(cx + start_r * Math.cos(a), cy + start_r * Math.sin(a))
+
+            // for (var i = 0; i < sides; i++) {
+            //     a += 1 / sides * Math.PI * 2
+            //     const r = Math.sin(t / 10000 * i ) * 5 + 20//Math.random() * 10 + 20
+            //     ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a))
+            // }
+            // ctx.closePath()
             ctx.stroke()
         }
     })
@@ -716,10 +717,12 @@ function gameLost(){
 
     const restart = e => {
         startGame()
-        document.getElementById('canvas-wrap').removeEventListener('click', restart)
+        canvas.removeEventListener('click', restart)
+        canvas.removeEventListener('touchstart', restart)
     }
 
-    document.getElementById('canvas-wrap').addEventListener('click', restart)
+    canvas.addEventListener('click', restart)
+    canvas.addEventListener('touchstart', restart)
 
 }
 
@@ -730,9 +733,20 @@ function update_ball_positions(dt){
     balls.forEach(ball => {
 
 
+        if(ball.done){
+            // console.log(ball_start_pos, ball.x, ball.gather_dir)
+            const d = next_ball_start_pos - (ball.x + dt * ball.vx)
+            if(Math.abs(d) < 1e-8 || d / ball.gather_dir < 0) {
+                ball.x = next_ball_start_pos
+                ball.vx = 0
+                ball.gathered = true
+                // console.log('gathered', ball)
+            }
+        }
+
         move_and_collide_ball(ball, dt)
 
-        if(ball.y > getBottom() - ball.r) {
+        if(ball.y > getBottom() - ball.r && !ball.done) {
             ball.y = getBottom() - ball.r
             // ball.vy *= -1
             ball.vx = 0
@@ -748,9 +762,8 @@ function update_ball_positions(dt){
             ball.done = true
         }
 
-
-        const v = Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy)
-        if(v == 0) ball.gathered = true
+        // const v = Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy)
+        // if(v == 0) ball.gathered = true
         // if(v > 0 && !ball.done){
         //     ball.vx *= ball_speed / v
         //     ball.vy *= ball_speed / v
