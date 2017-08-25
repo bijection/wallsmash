@@ -398,10 +398,11 @@ function draw_balls(){
             ctx.arc(x, y, r , 0, Math.PI * 2)
         } else if(type === 'laser') {
             ctx.fillStyle = LASER_COLOR
-            ctx.arc(x, y, r , 0, Math.PI * 2)
+            ctx.fillRect(x - r/2, y - r, r, r*2)
+            // ctx.arc(x, y, r , 0, Math.PI * 2)
         }
         ctx.fill()
-    })    
+    })
 }
 
 function draw_launcher(){
@@ -424,6 +425,26 @@ function draw_launcher(){
     ctx.fillStyle = NORMAL_COLOR
     ctx.arc(launcher_x, launcher_y, BALL_RADIUS, 0, Math.PI * 2)
     ctx.fill()
+}
+
+function draw_cell_glow(cell){
+    const [r,c,num] = cell
+
+    if(num <= 0) return;
+
+    const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
+
+    ctx.save()
+    ctx.strokeStyle = '#48f'
+    ctx.lineWidth = 4
+    ctx.shadowColor = '#000';
+    ctx.shadowBlur = 80;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillStyle = '#000'
+    ctx.fillRect(x, y, w, h)
+    // ctx.strokeRect(x, y, w, h)
+    ctx.restore()
 }
 
 function draw_cell(cell, bang){
@@ -506,6 +527,7 @@ function draw_cell(cell, bang){
 }
 
 function draw_cells(){
+    // if(currentLevel > 120) cells.forEach(c => draw_cell_glow(c))
     cells.forEach(c => draw_cell(c))
     cells.filter(cell=>cell.hit).forEach(c => draw_cell(c, true))
 }
@@ -617,12 +639,37 @@ function draw_lost_screen(){
     ctx.fillText('[tap to restart]', canvas.width / 2, canvas.height / 2 +text_size/2+20)
 }
 
-function draw_background(r){
-    ctx.fillStyle = 'rgba('+gradient('space', (currentLevel - 120) / 20) + ',1)'
-    if(game_state == 'levelup'){
-        ctx.fillStyle = 'rgba('+gradient('space', (currentLevel + (r - 1) - 120) / 20) + ',1)'
+function draw_background(r, t){
+
+    // ctx.fillStyle = 'rgba('+gradient('space', (currentLevel - 120) / 20) + ',1)'
+
+    ctx.save()
+    if(currentLevel <= 120) {
+        ctx.clearRect(0,0,canvas.width,canvas.height)
+    } else {
+
+        if (currentLevel === 121 && game_state == 'levelup'){
+            ctx.globalAlpha = r
+        }
+
+        const cx = canvas.width /2,
+            cy = canvas.height /2,
+            radius = Math.max(canvas.width, canvas.height),
+            th = t/10000;
+
+        const grad = ctx.createLinearGradient(cx-Math.sin(th)*radius, cy-Math.cos(th)*radius, cx+Math.sin(th)*radius, cy+Math.cos(th)*radius);
+
+
+        for(var i = 0; i < 3; i++){
+            let time = (t + i * 10000) / 1000;
+
+            grad.addColorStop(i / 3, `hsl(${(Math.sin(time)+1)/2*100}, 20%, 10%)`)
+        }
+
+        ctx.fillStyle = grad;
+        ctx.fillRect(0,0,canvas.width,canvas.height);        
     }
-    ctx.fillRect(0,0, canvas.width, canvas.height)
+    ctx.restore()
 }
 
 function get_level_transition_progress(t){
@@ -638,9 +685,9 @@ function get_level_transition_progress(t){
 function render(t, dt){
 
     const {r, total} = get_level_transition_progress(t)
-    draw_background(r)
+    draw_background(r, t)
 
-    ctx.fillStyle='#eee'
+    ctx.fillStyle='rgba(180,180,180,.3)'
     ctx.fillRect(0,getBottom(),canvas.width, canvas.height - getBottom())
 
 
