@@ -155,7 +155,8 @@ function tick(t){
                         vx:Math.cos(launch_angle) * ball_speed, // cos(theta)
                         vy:-1*Math.sin(launch_angle) * ball_speed, // sin(theta)
                         r,
-                        type
+                        type,
+                        last: !ball_types.filter(x => x==='ball').length
                     })
 
                 } else if(type === 'laser'){
@@ -329,7 +330,9 @@ document.ontouchstart = function(e){
 }
 
 end_button.addEventListener('click', e => {
-    balls.forEach(ball => {
+    balls
+    .filter(ball => !ball.falling && !ball.done && !ball.gathered)
+    .forEach(ball => {
         ball.vx = 0
         ball.vy = ball_speed
         ball.falling = true
@@ -391,7 +394,7 @@ function draw_trails(){
 }
 
 function draw_balls(){
-    balls.forEach(({x,y,vx,vy,r,type}) => {
+    balls.forEach(({x,y,vx,vy,r,type, last}) => {
         ctx.beginPath()
         if(type === 'ball') {
             ctx.fillStyle = NORMAL_COLOR
