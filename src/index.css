@@ -132,6 +132,10 @@ table tr:nth-child(even) td{
 
 }
 
+#end_button, #scoreboardButton{
+	user-select: none;
+}
+
 /*@media (max-width: 700px) {
 
 	#scoreInfo, #instructions {
