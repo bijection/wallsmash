@@ -43,7 +43,7 @@ let items = new Set()
 function startGame(){
     game_state = 'aiming'
     
-    currentLevel = 2
+    currentLevel = 5
     // next_ball_types = Array.from(new Array(currentLevel-1), () => Math.random() > .7 ? 'laser':'ball')
     next_ball_types = Array.from(new Array(currentLevel-1), () => 'ball')
     ball_types = Array.from(next_ball_types)
@@ -228,15 +228,41 @@ function tick(t){
                         })
                     })
 
+
+                    addParticle({
+                        x,
+                        y,
+                        r: 10, 
+                        vr: 250,
+                        fade: true,
+                        color: LASER_COLOR,
+                        // colormap: 'yiorrd',
+                        lifetime: .2,
+                        type: 'circle'
+                    })
+
+
+
                     addParticle({
                         x,
                         y,
                         toX: end[0],
                         toY: end[1],
                         r: 1, 
-                        vr: 150,
+                        vr: 250,
                         fade: true,
-                        color: '#aaf',
+                        color: LASER_COLOR,
+                        // colormap: 'yiorrd',
+                        lifetime: .2
+                    })
+                    addParticle({
+                        x,
+                        y,
+                        r: 10, 
+                        // vr: -350,
+                        fade: true,
+                        color: '#fff',
+                        type: 'circle',
                         // colormap: 'yiorrd',
                         lifetime: .2
                     })
@@ -248,11 +274,10 @@ function tick(t){
                         r: 2, 
                         // vr: -350,
                         fade: true,
-                        color: LASER_COLOR,
+                        color: '#fff',
                         // colormap: 'yiorrd',
                         lifetime: .2
                     })
-
 
                 }
 
@@ -722,6 +747,9 @@ function render(t, dt){
 
     draw_cells()
     draw_items(t)
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
     draw_particles()
 
     if (game_state === 'lost') {
