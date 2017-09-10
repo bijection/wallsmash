@@ -222,6 +222,7 @@ function tick(t){
                                     color: 'rgba(' + gradient('progress', n / 125) + ',1)'
                                 })
                                 cell[2]--
+                                incrementScore()
                             }
 
                         })
@@ -315,8 +316,8 @@ document.getElementById('canvas-wrap').addEventListener('mousemove', e => {
 })
 
 //for desktop: spacebar or mousedown to fire
-document.getElementById('canvas-wrap').addEventListener('keydown', keyPressed, true);
-document.getElementById('canvas-wrap').addEventListener('mousedown', shoot, true);
+document.getElementById('canvas-wrap').addEventListener('keypress', keyPressed, true);
+document.getElementById('canvas-wrap').addEventListener('click', shoot, true);
 //for mobile: touchmove to pan around, touchend to fire
 document.getElementById('canvas-wrap').addEventListener('touchmove', touchMoved, true);
 document.getElementById('canvas-wrap').addEventListener('touchend', shoot, true);
@@ -766,13 +767,14 @@ function gameLost(){
     }
 
     const restart = e => {
+        e.preventDefault()
         startGame()
         canvas.removeEventListener('click', restart)
-        canvas.removeEventListener('touchstart', restart)
+        canvas.removeEventListener('touchend', restart)
     }
 
     canvas.addEventListener('click', restart)
-    canvas.addEventListener('touchstart', restart)
+    canvas.addEventListener('touchend', restart)
 
 }
 
@@ -843,6 +845,20 @@ function update_particles(dt){
         new_particles.push(p)
     })
     particles = new_particles
+}
+
+function incrementScore(amount=1){
+    score += amount
+
+    scoreSpan.innerHTML = score
+
+    scoreSpan.style.transition = 'none'
+    scoreSpan.className = 'gold'
+
+    setTimeout(() => {
+        scoreSpan.style.transition = '1s'
+        scoreSpan.className = ''
+    }, 0)   
 }
 
 
@@ -1071,19 +1087,10 @@ function move_and_collide_ball(ball,dt){
                     })
 
                     mincell[2]--
-                    score ++
                 }
 
-                scoreSpan.innerHTML = score
+                incrementScore(hits)
 
-                scoreSpan.style.transition = 'none'
-                scoreSpan.className = 'gold'
-                
-                setTimeout(() => {
-                    scoreSpan.style.transition = '1s'
-                    scoreSpan.className = ''
-                }, 0)
-                
 
 
 
