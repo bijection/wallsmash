@@ -323,12 +323,12 @@ document.getElementById('canvas-wrap').addEventListener('touchmove', touchMoved,
 document.getElementById('canvas-wrap').addEventListener('touchend', shoot, true);
 
 //prevent scrolling on touchscreen
-document.ontouchstart = function(e){
+document.addEventListener('touchstart', function(e){
     if (e.target === canvas) {
         console.log('preventing scroll')
         e.preventDefault();
     }
-}
+}, {passive: false})
 
 end_button.addEventListener('click', e => {
     balls
