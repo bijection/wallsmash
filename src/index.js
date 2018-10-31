@@ -1,10 +1,10 @@
-import swal from 'sweetalert2'
-import 'sweetalert2/dist/sweetalert2.css'
+// import swal from 'sweetalert2'
+// import 'sweetalert2/dist/sweetalert2.css'
 
-import './scoreboard'
+// import './scoreboard'
 
 import gradient from './gradient'
-import scores from './scores'
+// import scores from './scores'
 
 import './index.css'
 
@@ -731,7 +731,7 @@ function render(t, dt){
 
 }
 
-window.swal = swal
+// window.swal = swal
 
 
 function gameLost(){
@@ -744,26 +744,26 @@ function gameLost(){
     if(score > pr) {
         recordSpan.innerHTML = score
         try{localStorage.pr = score} catch(e) {}
-        swal({
-            title: "New high score!",
-            text: score+" is your new personal record.",
-            input: 'text',
-            inputPlaceholder: 'Nickname for Leaderboard',
-            inputValue: localStorage.username || "",
-            showCancelButton: true,
-            confirmButtonText: "Submit",
-            reverseButtons: true,
-            inputValidator: value => new Promise(
-                (resolve, reject) => value 
-                    ? resolve()
-                    : reject('You need to write something!')
-            )
-        }).then(username => {
-            try{localStorage.username = username} catch(e) {}
-            scores.push({username, score})
-        }).catch(e => {
-            console.warn(e)
-        })
+        // swal({
+        //     title: "New high score!",
+        //     text: score+" is your new personal record.",
+        //     input: 'text',
+        //     inputPlaceholder: 'Nickname for Leaderboard',
+        //     inputValue: localStorage.username || "",
+        //     showCancelButton: true,
+        //     confirmButtonText: "Submit",
+        //     reverseButtons: true,
+        //     inputValidator: value => new Promise(
+        //         (resolve, reject) => value 
+        //             ? resolve()
+        //             : reject('You need to write something!')
+        //     )
+        // }).then(username => {
+        //     try{localStorage.username = username} catch(e) {}
+        //     scores.push({username, score})
+        // }).catch(e => {
+        //     console.warn(e)
+        // })
     }
 
     const restart = e => {
