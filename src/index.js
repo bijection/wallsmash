@@ -4,7 +4,8 @@ import 'sweetalert2/dist/sweetalert2.css'
 import './scoreboard'
 
 import gradient from './gradient'
-import scores from './scores'
+// import scores from './scores'
+import 'unfetch/polyfill'
 
 import './index.css'
 
@@ -760,7 +761,19 @@ function gameLost(){
             )
         }).then(username => {
             try{localStorage.username = username} catch(e) {}
-            scores.push({username, score})
+            // scores.push({username, score})
+            let fd = new FormData();
+            fd.set('data', JSON.stringify({
+                username: username,
+                score: score
+            }))
+            fetch('/scores', {
+                method: 'POST',
+                body: fd
+            })
+              .then( r => r.text() )
+              .then( data => console.log(data) )
+
         }).catch(e => {
             console.warn(e)
         })

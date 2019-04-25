@@ -1,10 +1,28 @@
-import scores from './scores'
+// import scores from './scores'
 import swal from 'sweetalert2'
+import 'unfetch/polyfill'
 
 const getTopScores = (callback)=>{
-  scores.orderByChild("score").limitToLast(100).once('value',function(snapshot){
-    callback(snapshot)
-  })
+  // scores.orderByChild("score").limitToLast(100).once('value',function(snapshot){
+  //   callback(snapshot)
+  // })
+
+
+  fetch('/scores')
+    .then(resp => resp.text())
+    .then(data => {
+      let scores = [];
+      for(let line of data.split('\n')){
+        try {
+          scores.push(JSON.parse(line))
+        } catch (err) {
+          console.warn(line, err)
+        }
+      }
+      callback(scores)
+    }, err => {
+      console.warn(err)
+    })
 }
 
 function escapeHtml(str) {
@@ -16,11 +34,11 @@ function escapeHtml(str) {
 
 document.getElementById("scoreboardButton")
 .addEventListener("click", 
-  () => getTopScores((scoreSnapshot)=>{
-  	let scores = []
-  	scoreSnapshot.forEach(function(score) {
-  		scores = [score.val()].concat(scores)
-    });
+  () => getTopScores((scores)=>{
+  	// let scores = []
+  	// scoreSnapshot.forEach(function(score) {
+  	// 	scores = [score.val()].concat(scores)
+   //  });
     
     console.log(scores)
 
