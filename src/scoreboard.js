@@ -19,6 +19,8 @@ const getTopScores = (callback)=>{
           console.warn(line, err)
         }
       }
+
+      scores.sort((b, a) => a.score - b.score).slice(0, 100)
       callback(scores)
     }, err => {
       console.warn(err)
