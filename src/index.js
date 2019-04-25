@@ -45,8 +45,8 @@ function startGame(){
     
     currentLevel = 5
     // next_ball_types = Array.from(new Array(currentLevel-1), () => Math.random() > .7 ? 'laser':'ball')
-    next_ball_types = Array.from(new Array(currentLevel-1), () => 'ball')
-    ball_types = Array.from(next_ball_types)
+    next_ball_types = []
+    ball_types = Array.from(new Array(currentLevel-1), () => 'ball')
 
     balls = []
     particles = []
@@ -137,7 +137,7 @@ function tick(t){
                     let launch_angle = get_launch_angle()
 
                     const r = BALL_RADIUS
-                    const x = ball_start_pos || canvas.width / 2
+                    const x = getBallStartPos()
                     const y = getBottom() - r
 
                     balls.push({
@@ -163,8 +163,9 @@ function tick(t){
                     let launch_angle = get_launch_angle(Math.sin(ball_types.length / 8 * Math.PI) *Math.PI / 100)
 
                     const r = BALL_RADIUS
-                    const x = ball_start_pos || canvas.width / 2
+                    const x = getBallStartPos()
                     const y = getBottom() - r
+                    next_ball_types.push('laser')
 
                     // balls.push({
                     //     x,
@@ -292,7 +293,8 @@ function tick(t){
                 currentLevel++;
 
                 ball_start_pos = next_ball_start_pos
-                ball_types = Array.from(next_ball_types)
+                ball_types = next_ball_types
+                next_ball_types = []
 
                 //potentially set game_state to 'lost'
                 game_state='levelup'
@@ -348,7 +350,7 @@ document.getElementById('canvas-wrap').addEventListener('touchmove', touchMoved,
 document.getElementById('canvas-wrap').addEventListener('touchend', shoot, true);
 
 //prevent scrolling on touchscreen
-document.addEventListener('touchstart', function(e){
+document.addEventListener('touchstart', e => {
     if (e.target === canvas) {
         console.log('preventing scroll')
         e.preventDefault();
@@ -386,7 +388,7 @@ end_button.addEventListener('click', e => {
 
 const get_launch_angle = (da = 0)=>{
     const r = BALL_RADIUS
-    const x = ball_start_pos || canvas.width / 2
+    const x = getBallStartPos()
     const y = getBottom() - r
 
     const dx = mouse.x - x
@@ -420,7 +422,7 @@ function draw_trails(){
 }
 
 function draw_balls(){
-    balls.forEach(({x,y,vx,vy,r,type, last}) => {
+    balls.forEach(({x,y,vx,vy,r,type,last}) => {
         ctx.beginPath()
         if(type === 'ball') {
             ctx.fillStyle = NORMAL_COLOR
@@ -435,7 +437,7 @@ function draw_balls(){
 }
 
 function draw_launcher(){
-    const launcher_x = ball_start_pos || canvas.width / 2
+    const launcher_x = getBallStartPos()
     const launcher_y = getBottom() - BALL_RADIUS
     const launcher_line_length = Math.sqrt(canvas.height*canvas.height + canvas.width*canvas.width)
     let launch_angle = get_launch_angle()
@@ -450,9 +452,18 @@ function draw_launcher(){
     ctx.stroke()
     ctx.restore()
 
+    const type = ball_types[0]
+    const r = 10
+
     ctx.beginPath()
-    ctx.fillStyle = NORMAL_COLOR
-    ctx.arc(launcher_x, launcher_y, BALL_RADIUS, 0, Math.PI * 2)
+    if(type === 'ball') {
+        ctx.fillStyle = NORMAL_COLOR
+        ctx.arc(launcher_x, launcher_y, r , 0, Math.PI * 2)
+    } else if(type === 'laser') {
+        ctx.fillStyle = LASER_COLOR
+        ctx.fillRect(launcher_x - r/2, launcher_y - r, r, r*2)
+        // ctx.arc(x, y, r , 0, Math.PI * 2)
+    }
     ctx.fill()
 }
 
@@ -712,14 +723,31 @@ function get_level_transition_progress(t){
 }
 
 function render(t, dt){
-
     const {r, total} = get_level_transition_progress(t)
     draw_background(r, t)
 
     ctx.fillStyle='rgba(180,180,180,.3)'
     ctx.fillRect(0,getBottom(),canvas.width, canvas.height - getBottom())
 
+    console.log(ball_types)
+    ball_types.slice(1).forEach((type, i) => {
 
+        const spacing = Math.min(22, (canvas.width - getBallStartPos()) / ball_types.length)
+        const x = spacing * (i+1) + getBallStartPos()
+        const y = (getBottom() + canvas.height) / 2
+        const r = 10
+
+        ctx.beginPath()
+        if(type === 'ball') {
+            ctx.fillStyle = NORMAL_COLOR
+            ctx.arc(x, y, r , 0, Math.PI * 2)
+        } else if(type === 'laser') {
+            ctx.fillStyle = LASER_COLOR
+            ctx.fillRect(x - r/2, y - r, r, r*2)
+            // ctx.arc(x, y, r , 0, Math.PI * 2)
+        }
+        ctx.fill()
+    })
 
     draw_trails()
     draw_balls()
@@ -812,14 +840,23 @@ function update_ball_positions(dt){
 
     balls.forEach(ball => {
 
+        const i = typeof ball.place ==='undefined'
+            ? balls.filter(ball=>ball.done).length
+            : ball.place
+        const restx = Math.min(22, (canvas.width - next_ball_start_pos) / balls.length) * i + next_ball_start_pos
+        const resty = (getBottom() + canvas.height) / 2
 
-        if(ball.done){
+        if(ball.done && !ball.gathered){
             // console.log(ball_start_pos, ball.x, ball.gather_dir)
-            const d = next_ball_start_pos - (ball.x + dt * ball.vx)
+            const d = restx - (ball.x + dt * ball.vx)
             if(Math.abs(d) < 1e-8 || d / ball.gather_dir < 0) {
-                ball.x = next_ball_start_pos
                 ball.vx = 0
+                ball.vy = 0
+                ball.x = restx
+                ball.y = resty
                 ball.gathered = true
+                next_ball_types.push(ball.type)
+                // ball.y = (getBottom()+canvas.height)/2
                 // console.log('gathered', ball)
             }
         }
@@ -835,11 +872,14 @@ function update_ball_positions(dt){
             if(!balls.some(ball => ball.done)){
                 next_ball_start_pos = Math.min(Math.max(ball.x, ball.r), canvas.width - ball.r)
                 ball.gathered = true
+                next_ball_types.push(ball.type)
             } else {
-                ball.vx = (next_ball_start_pos - ball.x) * (2 + Math.random())
-                ball.gather_dir = (next_ball_start_pos - ball.x) || 1
+                ball.vx = (restx - ball.x) * 2
+                ball.vy = (resty - ball.y) * 2
+                ball.gather_dir = (restx - ball.x) || 1
             }
             ball.done = true
+            ball.place = i
         }
 
         // const v = Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy)
@@ -1016,7 +1056,6 @@ function move_and_collide_ball(ball,dt){
 
                 if(type === 'ball') {
 
-                    next_ball_types.push('ball')
                     const theta = (Math.random() - .5) * Math.PI * 1/16 + Math.atan2(ball.vy, ball.vx)
 
                     balls.push({
@@ -1042,7 +1081,6 @@ function move_and_collide_ball(ball,dt){
 
                 } else if(type === 'laser') {
 
-                    next_ball_types.push('laser')
 
                     balls.push({
                         x: cx,
@@ -1270,7 +1308,9 @@ function getBottom(){
 }
 
 
-
+function getBallStartPos(){
+    return ball_start_pos || canvas.width / 2
+}
 
 
 
