@@ -43,7 +43,7 @@ let items = new Set()
 function startGame(){
     game_state = 'aiming'
     
-    currentLevel = 2
+    currentLevel = 5
     // next_ball_types = Array.from(new Array(currentLevel-1), () => Math.random() > .7 ? 'laser':'ball')
     next_ball_types = Array.from(new Array(currentLevel-1), () => 'ball')
     ball_types = Array.from(next_ball_types)
@@ -470,6 +470,14 @@ function draw_cell(cell, bang){
     ctx.fillStyle = 'rgba(' + gradient('progress', num / 125) + ',1)'
     ctx.fillRect(x + bx, y + by, w,h)
 
+
+    if(bang) {
+        ctx.translate(bx, by);
+        // ctx.globalAlpha = .1;
+        // ctx.fillRect(0,0,canvas.width,canvas.height)
+        // ctx.globalAlpha = 1;
+    }
+
     // if(num > 125){
     //     ctx.globalAlpha = (num - 125) / 50
     //     ctx.drawImage(STARS_IM, x,y,w,h)
@@ -528,6 +536,7 @@ function draw_cell(cell, bang){
 
     ctx.fillStyle = 'white';
     ctx.fillText(num, cx + bx, cy + by)
+    if(bang)ctx.translate(-bx, -by)
 }
 
 function draw_cells(){
