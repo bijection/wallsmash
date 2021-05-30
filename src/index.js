@@ -754,6 +754,7 @@ function gameLost(){
     let pr = localStorage.pr || 0
     console.log("Game state lost")
 
+    const beatScore = weeklyScores.findIndex(s => s.score < score)
 
     if(score > pr) {
         recordSpan.innerHTML = score.toLocaleString()
@@ -775,11 +776,14 @@ function gameLost(){
         }).then(username => {
             try{localStorage.username = username} catch(e) {}
             scores.push({username, score})
+            if(beatScore >= 0) {
+                weeklyScores.splice(beatScore, 0, {username, score})
+                updateScoreFeed()
+            }
         }).catch(e => {
             console.warn(e)
         })
     } else {
-        const beatScore = weeklyScores.findIndex(s => s.score < score)
         if(beatScore >= 0) 
             swal({
                 title: "New high score!",

@@ -12,4 +12,4 @@ echo '*' >> dist/main.appcache
 
 echo wallsmash.com > dist/CNAME
 
-yarn upload 
+yarn gh-pages -d dist

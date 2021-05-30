@@ -2,7 +2,7 @@
   "scripts": {
     "start": "node server.js",
     "build": "webpack --config webpack.config.prod.js",
-    "upload": "yarn build && echo wallsmash.com > dist/CNAME && gh-pages -d dist"
+    "upload": "./deploy.sh"
   },
   "author": "bijection",
   "license": "ISC",
