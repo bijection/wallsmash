@@ -1,7 +1,7 @@
 import swal from 'sweetalert2'
 import 'sweetalert2/dist/sweetalert2.css'
 
-import './scoreboard'
+import {weeklyScores,updateScoreFeed} from './scoreboard'
 
 import gradient from './gradient'
 import scores from './scores'
@@ -12,6 +12,7 @@ let ctx;
 let scoreSpan;
 let recordSpan;
 let score;
+let achievementWindow;
 
 let game_state;
 let last_level_end;
@@ -265,6 +266,10 @@ function tick(t){
 
                 //update to next level
                 currentLevel++;
+
+                if(currentLevel > 6) {
+                    achievementWindow.style.display = 'none'
+                }
 
                 ball_start_pos = next_ball_start_pos
                 ball_types = Array.from(next_ball_types)
@@ -751,7 +756,7 @@ function gameLost(){
 
 
     if(score > pr) {
-        recordSpan.innerHTML = score
+        recordSpan.innerHTML = score.toLocaleString()
         try{localStorage.pr = score} catch(e) {}
         swal({
             title: "New high score!",
@@ -773,6 +778,31 @@ function gameLost(){
         }).catch(e => {
             console.warn(e)
         })
+    } else {
+        const beatScore = weeklyScores.findIndex(s => s.score < score)
+        if(beatScore >= 0) 
+            swal({
+                title: "New high score!",
+                text: `You got the #${beatScore+1} score this week!\b`,
+                input: 'text',
+                inputPlaceholder: 'Nickname for Leaderboard',
+                inputValue: localStorage.username || "",
+                showCancelButton: true,
+                confirmButtonText: "Submit",
+                reverseButtons: true,
+                inputValidator: value => new Promise(
+                    (resolve, reject) => value 
+                        ? resolve()
+                        : reject('You need to write something!')
+                )
+            }).then(username => {
+                try{localStorage.username = username} catch(e) {}
+                scores.push({username, score})
+                weeklyScores.splice(beatScore, 0, {username, score})
+                updateScoreFeed()
+            }).catch(e => {
+                console.warn(e)
+            })
     }
 
     const restart = e => {
@@ -859,7 +889,7 @@ function update_particles(dt){
 function incrementScore(amount=1){
     score += amount
 
-    scoreSpan.innerHTML = score
+    scoreSpan.innerHTML = score.toLocaleString()
 
     scoreSpan.style.transition = 'none'
     scoreSpan.className = 'gold'
@@ -1271,7 +1301,11 @@ ctx = canvas.getContext('2d');
 scoreSpan = document.getElementById("score")
 
 recordSpan = document.getElementById("record")
-recordSpan.innerHTML = localStorage.pr || 0
+try {
+    recordSpan.innerHTML = (+(localStorage.pr || 0)).toLocaleString()
+}catch(e){}
+
+achievementWindow = document.querySelector('.achievement')
 
 startGame()
 

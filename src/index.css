@@ -57,6 +57,7 @@ h2 {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	height: 75px;
 }
 
 #headerLeft {
@@ -93,7 +94,55 @@ h2 {
 }
 
 .spacer {
-	flex:1
+	flex: 1;
+}
+
+.week-scores {
+	width: 300px;
+	flex-shrink: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+}
+
+.scores-marquee-wrap {
+	flex:1;
+	overflow: hidden;
+	height: 100%;
+	position: relative;
+}
+
+.scores-marquee {
+	animation: marquee 100s linear infinite;
+	display: flex;
+	gap: 10px;
+	padding: 0 10px;
+	white-space: nowrap;
+	align-items: center;
+	height: 100%;
+	position: absolute;
+}
+
+.scores-marquee:hover {
+    animation-play-state: paused;
+}
+
+.score-place span {
+	font-size: 80%;
+	background: #222;
+	border-radius: 3px;
+	padding: 0 5px;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0%);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 .button {
@@ -103,15 +152,19 @@ h2 {
 }
 
 #score-wrap {
-	padding: 0 10px;
+	padding-left: 10px;
 }
 
 #scoreInfo {
 	display: flex;
+	align-items: center;
 }
 
 #score {
 	/*transition: .5s;*/
+	font-size: 150%;
+	padding-left: 5px;
+	padding-right: 10px;
 }
 
 #username {
@@ -140,6 +193,7 @@ table tr:nth-child(even) td{
 
 #end_button, #scoreboardButton{
 	user-select: none;
+	text-align: center;
 }
 
 /*@media (max-width: 700px) {
@@ -159,6 +213,7 @@ table tr:nth-child(even) td{
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+    pointer-events: none;
 }
 
 .achievements b {

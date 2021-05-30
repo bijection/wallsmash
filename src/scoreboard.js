@@ -7,10 +7,42 @@ const getTopScores = (callback)=>{
   })
 }
 
+
 function escapeHtml(str) {
     var div = document.createElement('div');
     div.appendChild(document.createTextNode(str));
     return div.innerHTML;
+}
+
+
+export let weeklyScores
+scores.limitToLast(100).once('value', (scoreSnapshot)=>{
+    const tops = {}
+
+    scoreSnapshot.forEach((handle) => {
+      const val = handle.val()
+      tops[val.username] = val
+    })
+
+    weeklyScores = Object.values(tops).sort((a,b) => b.score - a.score).filter(x => x.score > 1000)
+    updateScoreFeed()
+})
+
+
+export const updateScoreFeed = () => {
+  const feed = `
+      <div class='week-scores'>
+        <div>High Scores</div>
+        <div>This Week</div>
+      </div>
+      ${weeklyScores.map(({username, score}, i) => `
+      <div>
+      <div class='score-place'><span>#${i + 1} Weekly</span></div>
+        <div><b>${escapeHtml(username.slice(0,100))}</b></div>
+        <div>${(+escapeHtml(score)).toLocaleString()}</div>
+      </div>
+`).join('')}`
+  document.querySelector(".scores-marquee").innerHTML = feed + feed
 }
 
 
@@ -42,7 +74,7 @@ document.getElementById("scoreboardButton")
     </div>`
 
    	swal({
-   		title: "GKC Top Scores",
+   		title: "Wallsmash All Time Top Scores",
    		html: table,
    		// type: 'info'
    	})
