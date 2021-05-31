@@ -267,7 +267,7 @@ function tick(t){
                 //update to next level
                 currentLevel++;
 
-                if(currentLevel > 6) {
+                if(currentLevel > 5) {
                     achievementWindow.style.display = 'none'
                 }
 
