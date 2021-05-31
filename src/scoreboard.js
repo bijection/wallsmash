@@ -43,6 +43,7 @@ export const updateScoreFeed = () => {
       </div>
 `).join('')}`
   document.querySelector(".scores-marquee").innerHTML = feed + feed
+  document.querySelector(".scores-marquee").classList.add('marquee')
 }
 
 
