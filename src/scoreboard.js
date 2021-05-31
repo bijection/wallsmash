@@ -16,7 +16,7 @@ function escapeHtml(str) {
 
 
 export let weeklyScores
-scores.limitToLast(100).once('value', (scoreSnapshot)=>{
+scores.limitToLast(200).once('value', (scoreSnapshot)=>{
     const tops = {}
 
     scoreSnapshot.forEach((handle) => {
@@ -24,7 +24,7 @@ scores.limitToLast(100).once('value', (scoreSnapshot)=>{
       tops[val.username] = val
     })
 
-    weeklyScores = Object.values(tops).sort((a,b) => b.score - a.score).filter(x => x.score > 1000)
+    weeklyScores = Object.values(tops).sort((a,b) => b.score - a.score).filter(x => x.score > 1000).slice(0,30)
     updateScoreFeed()
 })
 
@@ -41,11 +41,41 @@ export const updateScoreFeed = () => {
         <div><b>${escapeHtml(username.slice(0,100))}</b></div>
         <div>${(+escapeHtml(score)).toLocaleString()}</div>
       </div>
-`).join('')}`
-  document.querySelector(".scores-marquee").innerHTML = feed + feed
-  document.querySelector(".scores-marquee").classList.add('marquee')
+    `).join('')}`
+    const el=document.querySelector(".scores-marquee")
+    el.innerHTML = feed + feed
+    el.classList.add('marquee')
 }
 
+
+document.querySelector(".scores-marquee")
+.addEventListener("click", 
+  () => {
+
+    const table = `<div style="overflow: scroll; max-height: 300px">
+      <table id="scoreTable" style="width: 100%;">
+        <tbody>
+          <tr>
+            <th align="left" style="width: 10%;">Place</th>
+            <th align="center" style="width: 50%;">Username</th>
+            <th align="center" style="width: 40%;">Score</th>
+          </tr>
+          ${weeklyScores.map(({username, score}, i) => `<tr>
+            <td align="center" style="width: 10%; padding: 5px;">${i + 1}</td>
+            <td align="center" style="width: 50%; padding: 5px;">${escapeHtml(username)}</td>
+            <td align="center" style="width: 40%; padding: 5px;">${(+escapeHtml(score)).toLocaleString()}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`
+
+     swal({
+       title: "Wallsmash Weekly Top Scores",
+       html: table,
+       // type: 'info'
+     })
+
+})
 
 document.getElementById("scoreboardButton")
 .addEventListener("click", 
@@ -68,7 +98,7 @@ document.getElementById("scoreboardButton")
           ${scores.map(({username, score}, i) => `<tr>
             <td align="center" style="width: 10%; padding: 5px;">${i + 1}</td>
             <td align="center" style="width: 50%; padding: 5px;">${escapeHtml(username)}</td>
-            <td align="center" style="width: 40%; padding: 5px;">${escapeHtml(score)}</td>
+            <td align="center" style="width: 40%; padding: 5px;">${(+escapeHtml(score)).toLocaleString()}</td>
           </tr>`).join('')}
         </tbody>
       </table>

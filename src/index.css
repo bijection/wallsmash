@@ -192,6 +192,11 @@ table tr:nth-child(even) td{
 
 }
 
+#end_button {
+	opacity: 0;
+	transition: .2s;
+}
+
 #end_button, #scoreboardButton{
 	user-select: none;
 	text-align: center;
@@ -214,7 +219,6 @@ table tr:nth-child(even) td{
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    pointer-events: none;
 }
 
 .achievements b {

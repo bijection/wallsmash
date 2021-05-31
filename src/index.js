@@ -268,7 +268,7 @@ function tick(t){
                 currentLevel++;
 
                 if(currentLevel > 5) {
-                    achievementWindow.style.display = 'none'
+                    achievementWindow.style.opacity = 0
                 }
 
                 ball_start_pos = next_ball_start_pos
@@ -308,6 +308,7 @@ function shoot() {
     if(game_state === 'aiming'){
         balls = []
         game_state = 'playing'
+        end_button.style.opacity=1
     }
 }
 
@@ -343,6 +344,11 @@ end_button.addEventListener('click', e => {
         ball.vy = ball_speed
         ball.falling = true
     })
+})
+
+achievementWindow = document.querySelector('.achievement')
+achievementWindow.addEventListener('click', e => {
+    achievementWindow.style.opacity = 0
 })
 
 
@@ -731,6 +737,7 @@ function render(t, dt){
                   game_state = 'lost'
                 }
             })
+            end_button.style.opacity=0
         }
     }
 
@@ -1309,7 +1316,7 @@ try {
     recordSpan.innerHTML = (+(localStorage.pr || 0)).toLocaleString()
 }catch(e){}
 
-achievementWindow = document.querySelector('.achievement')
+
 
 startGame()
 
