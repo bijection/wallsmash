@@ -21,7 +21,7 @@ scores.limitToLast(200).once('value', (scoreSnapshot)=>{
 
     scoreSnapshot.forEach((handle) => {
       const val = handle.val()
-      tops[val.username] = val
+      if(!tops[val.username] || tops[val.username].score < val.score) tops[val.username] = val
     })
 
     weeklyScores = Object.values(tops).sort((a,b) => b.score - a.score).filter(x => x.score > 1000).slice(0,30)
