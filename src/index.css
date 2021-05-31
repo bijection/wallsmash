@@ -98,7 +98,7 @@ h2 {
 }
 
 .week-scores {
-	width: 300px;
+	width: 200px;
 	flex-shrink: 0;
 	display: flex;
 	justify-content: center;
@@ -124,8 +124,10 @@ h2 {
 	position: absolute;
 }
 
-.scores-marquee:hover {
-    animation-play-state: paused;
+@media (min-width: 1000px) {
+	.scores-marquee:hover {
+    	animation-play-state: paused;
+	}
 }
 
 .score-place span {
