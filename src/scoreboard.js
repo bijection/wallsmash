@@ -38,7 +38,7 @@ export const updateScoreFeed = () => {
       ${weeklyScores.map(({username, score}, i) => `
       <div>
       <div class='score-place'><span>#${i + 1} Weekly</span></div>
-        <div><b>${escapeHtml(username.slice(0,100))}</b></div>
+        <div><b>${escapeHtml(username.slice(0,60))}</b></div>
         <div>${(+escapeHtml(score)).toLocaleString()}</div>
       </div>
     `).join('')}`
@@ -62,7 +62,7 @@ document.querySelector(".scores-marquee")
           </tr>
           ${weeklyScores.map(({username, score}, i) => `<tr>
             <td align="center" style="width: 10%; padding: 5px;">${i + 1}</td>
-            <td align="center" style="width: 50%; padding: 5px;">${escapeHtml(username)}</td>
+            <td align="center" style="width: 50%; padding: 5px;">${escapeHtml(username.slice(0,60))}</td>
             <td align="center" style="width: 40%; padding: 5px;">${(+escapeHtml(score)).toLocaleString()}</td>
           </tr>`).join('')}
         </tbody>
