@@ -782,7 +782,7 @@ function gameLost(){
             )
         }).then(username => {
             try{localStorage.username = username} catch(e) {}
-            scores.push({username, score})
+            scores.push(score > 1e5 ? {username, score, check: (score%823)**2%823} : {username, score})
             if(beatScore >= 0) {
                 weeklyScores.splice(beatScore, 0, {username, score})
                 updateScoreFeed()
