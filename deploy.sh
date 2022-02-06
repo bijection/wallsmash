@@ -1,6 +1,7 @@
 #! /bin/bash
 rm -rf dist
 yarn build
+cp wallsmash.png dist
 sed -e 's/_manifest/manifest/g' index.html > dist/index.html
 
 echo "CACHE MANIFEST" > dist/main.appcache
