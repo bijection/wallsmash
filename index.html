@@ -54,17 +54,28 @@
 					<div>Personal Best: <span id="record">0</span></div>
 					<div class='spacer'></div>
 					<div class='button' id='end_button'>End Turn Early</div>
+					<div class='button' id='chat_toggle'>Hide Chat</div>
 				</div>
 			</div>
-			<div id="canvas-wrap">
-				<canvas id="canvas" tabindex='1'></canvas>
+			<div class="canvas-chat-wrap">
+				<div id="canvas-wrap">
+					<canvas id="canvas" tabindex='1'></canvas>
+				</div>
+				<div class='chat'>
+					<div class="messages"></div>
+					<div class="compose">
+						<input class="username-picker" type='text' placeholder="username"/>
+						<textarea placeholder="Type a message..."></textarea>
+					</div>
+				</div>
 			</div>
 			<div class='achievements'>
-					<div class="achievement">
+					<!-- <div class="achievement">
 						<b>👋 Welcome to WallSmash!</b><br/>
 						Can you get to level 100 and<br/>
-						<b>see the stars</b>?</div>
+						<b>see the stars</b>?</div> -->
 			</div>
+
 		</div>
 		<script type="text/javascript" src="./bundle.js"></script>
 		<script>

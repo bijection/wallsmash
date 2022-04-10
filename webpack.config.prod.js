@@ -31,7 +31,7 @@ module.exports = {
       include: [path.join(__dirname, 'src')]
     }, {
       test: /\.css$/,
-      loaders: ["style-loader", "css-loader", "less-loader"]
+      loaders: ["style-loader", "css-loader"]
     }, {
       test: /\.(ne|tsv|csv|txt)$/,
       loaders: ["raw-loader"]

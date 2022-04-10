@@ -267,9 +267,9 @@ function tick(t){
                 //update to next level
                 currentLevel++;
 
-                if(currentLevel > 5) {
-                    achievementWindow.style.opacity = 0
-                }
+                // if(currentLevel > 5) {
+                //     achievementWindow.style.opacity = 0
+                // }
 
                 ball_start_pos = next_ball_start_pos
                 ball_types = Array.from(next_ball_types)
@@ -346,10 +346,10 @@ end_button.addEventListener('click', e => {
     })
 })
 
-achievementWindow = document.querySelector('.achievement')
-achievementWindow.addEventListener('click', e => {
-    achievementWindow.style.opacity = 0
-})
+// achievementWindow = document.querySelector('.achievement')
+// achievementWindow.addEventListener('click', e => {
+//     achievementWindow.style.opacity = 0
+// })
 
 
 
