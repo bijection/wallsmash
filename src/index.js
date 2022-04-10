@@ -1,3 +1,4 @@
+import firebase from 'firebase/app'
 import swal from 'sweetalert2'
 import 'sweetalert2/dist/sweetalert2.css'
 
@@ -5,8 +6,13 @@ import {weeklyScores,updateScoreFeed} from './scoreboard'
 
 import gradient from './gradient'
 import scores from './scores'
+import chat from './chat'
 
 import './index.css'
+
+import Gathering from './gathering'
+
+const gathering = new Gathering(database)
 
 let ctx;
 let scoreSpan;
@@ -345,6 +351,40 @@ end_button.addEventListener('click', e => {
         ball.falling = true
     })
 })
+
+const username_input = document.querySelector('.compose input')
+const username = localStorage.username || 'anon_' + Math.floor(1000 + Math.random()*1000)
+username_input.value = username
+
+gathering.join(username)
+
+username_input.addEventListener('change', e => {
+    try{
+        localStorage.username = e.target.value
+    } catch(e){
+        console.warn(e)
+    }
+})
+
+document.querySelector('.compose textarea').addEventListener('keypress', e=> {
+    e.target.value = e.target.value.slice(0, 2000)
+    console.log(chat)
+    if(e.key === 'Enter' && !e.shiftKey && e.target.value.trim() !== '') {
+        e.preventDefault()
+        chat.push({
+            message: e.target.value, 
+            username: username_input.value,
+            score,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        })
+        e.target.value = ''
+    }
+})
+
+gathering.onUpdated(numOnline => {
+    document.querySelector('.online').innerText = numOnline + ' online'
+})
+
 
 // achievementWindow = document.querySelector('.achievement')
 // achievementWindow.addEventListener('click', e => {

@@ -253,7 +253,7 @@ table tr:nth-child(even) td{
 
 .chat {
     background: #333;
-    width: 400px;
+    width: 250px;
 	max-width: 30%;
     font-size: 12px;
 	display: flex;
@@ -290,6 +290,11 @@ table tr:nth-child(even) td{
     border-top: 1px solid #444;
 }
 
+.message-spacer {
+	height: 4px;
+	background-color: #111;
+}
+
 .username {
 	font-weight: bold;
 	position: sticky;
@@ -309,6 +314,22 @@ table tr:nth-child(even) td{
     opacity: 0.8;
 }
 
+.username .score {
+	display: inline-block;
+    background: #000;
+    font-size: 8px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+}
+
+
+.online {
+	background: #444444;
+    color: #ccc;
+    padding: 2px 10px;
+}
+
 .compose {
     background: #444;
     display: flex;
@@ -317,7 +338,6 @@ table tr:nth-child(even) td{
 
 .compose input {
 	border: 0;
-	border-top: 4px solid  #444;
 	border-top-left-radius: 3px;
 	border-top-right-radius: 3px;
 	background-color: #333;
