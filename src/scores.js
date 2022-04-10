@@ -110,6 +110,7 @@ username_input.addEventListener('change', e => {
 })
 
 document.querySelector('.compose textarea').addEventListener('keypress', e=> {
+    e.target.value = e.target.value.slice(0, 2000)
     if(e.key === 'Enter' && !e.shiftKey && e.target.value.trim() !== '') {
         e.preventDefault()
         newMessage({

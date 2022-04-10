@@ -337,4 +337,5 @@ table tr:nth-child(even) td{
 	outline: none;
 	padding: 5px 10px;
 	font: inherit;
+	height: 100px;
 }
