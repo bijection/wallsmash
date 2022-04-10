@@ -59,9 +59,12 @@ chat.limitToLast(50).on('value', s => {
             </div>	
             <div class="message"></div>
         `
+
+        console.log(s, s.score && +(s.score).toLocaleString())
+
         node.querySelector('.message').innerText = s.message.toString().slice(0,2000)
         node.querySelector('.name').innerText = s.username
-        if(s.score) node.querySelector('.score').innerText = +(s.score).toLocaleString()
+        if(s.score) node.querySelector('.score').innerText = (+s.score).toLocaleString()
         node.querySelector('.time').innerText = now - s.timestamp > 1000 * 60 * 60 * 2 
             ? new Date(s.timestamp).toLocaleDateString()
             : new Date(s.timestamp).toLocaleTimeString().replace(/(?<=.+:[^;]+):\d+/, '')
