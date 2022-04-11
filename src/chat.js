@@ -79,7 +79,7 @@ chat.limitToLast(50).on('value', s => {
                 : s.achievement === 'personal_record' 
                 ? s.username + ' set a new personal record: ' + (+s.score).toLocaleString()
                 : s.achievement === 'weekly_record' 
-                ? `${s.username} scored #${place+1} weekly: ${(+s.score).toLocaleString()}`
+                ? `${s.username} scored #${s.place+1} weekly: ${(+s.score).toLocaleString()}`
                 : 'unknown achievement, reload the page?'
         } else {
             node.className = 'message-item'
