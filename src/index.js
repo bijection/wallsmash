@@ -815,7 +815,7 @@ function personalRecordAchievement(username){
     })
 }
 
-window.personalRecordAchievement = personalRecordAchievement
+// window.personalRecordAchievement = personalRecordAchievement
 
 function weeklyScoreAchievement(username, place){
     chat.push({
@@ -891,6 +891,8 @@ function gameLost(){
         }).catch(e => {
             console.warn(e)
         })
+    } else if (score > 1e3) {
+        goodScoreAchievement(username)
     }
 
 
