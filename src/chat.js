@@ -48,26 +48,44 @@ chat.limitToLast(50).on('value', s => {
     messages.forEach((s, i) => {
 
         const prev = messages[i-1]
-
         const node = document.createElement('div')
-        node.className = 'message-item'
-        node.innerHTML = `
-            <div class="username">
-                <div class="name"></div>
-                ${s.score ? `<div class="score"></div>` : ''}
-                <div class="time"></div>
-            </div>	
-            <div class="message"></div>
-        `
 
-        console.log(s, s.score && +(s.score).toLocaleString())
+        if(s.achievement) {
+            node.classList.add('achievement', s.achievement)
 
-        node.querySelector('.message').innerText = s.message.toString().slice(0,2000)
-        node.querySelector('.name').innerText = s.username
-        if(s.score) node.querySelector('.score').innerText = (+s.score).toLocaleString()
-        node.querySelector('.time').innerText = now - s.timestamp > 1000 * 60 * 60 * 2 
-            ? new Date(s.timestamp).toLocaleDateString()
-            : new Date(s.timestamp).toLocaleTimeString().replace(/(?<=.+:[^;]+):\d+/, '')
+            let score_level = s.score > 1e6 ? 'diamond'
+                : s.score > 1e5 ? 'gold'
+                : s.score > 1e4 ? 'silver'
+                : 'bronze'
+
+            if(s.achievement === 'good_score') node.classList.add(score_level)
+
+            node.innerText = s.achievement === 'good_score' 
+                ? `[${score_level}] ${s.username} scored ${s.score.toLocaleString()}`
+                : s.achievement === 'personal_record' 
+                ? s.username + ' set a new personal record: ' + s.score
+                : s.achievement === 'weekly_record' 
+                ? `${s.username} scored #${place} weekly: ${s.score.toLocaleString()}`
+                : 'unknown achievement, reload the page?'
+        } else {
+            node.className = 'message-item'
+            node.innerHTML = `
+                <div class="username">
+                    <div class="name"></div>
+                    ${s.score ? `<div class="score"></div>` : ''}
+                    <div class="time"></div>
+                </div>	
+                <div class="message"></div>
+            `
+    
+            node.querySelector('.message').innerText = s.message.toString().slice(0,2000)
+            node.querySelector('.name').innerText = s.username
+            if(s.score) node.querySelector('.score').innerText = (+s.score).toLocaleString()
+            node.querySelector('.time').innerText = now - s.timestamp > 1000 * 60 * 60 * 2 
+                ? new Date(s.timestamp).toLocaleDateString()
+                : new Date(s.timestamp).toLocaleTimeString().replace(/(?<=.+:[^;]+):\d+/, '')    
+        }
+
 
         if(prev && s.timestamp - prev.timestamp > 1000 * 60 * 15) {
             const node = document.createElement('div')

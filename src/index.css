@@ -290,6 +290,36 @@ table tr:nth-child(even) td{
     border-top: 1px solid #444;
 }
 
+.achievement {
+	padding: 0 10px;
+	color: #ccc;
+}
+
+.achievement.diamond {
+    background: #3782b8;
+    color: #d4f9ff;
+}
+
+.achievement.gold {
+	background: #8b7c0b;
+    color: #fff199;
+}
+
+.achievement.silver {
+	background: #59646c;
+    color: #dddddd;
+}
+
+.achievement.bronze {
+	background: #814e02;
+	color: #ffb54a;
+}
+
+.achievement.personal_record{
+	background: #2b523c;
+	color: #b2cbbd;
+}
+
 .message-spacer {
 	height: 4px;
 	background-color: #111;
@@ -301,7 +331,7 @@ table tr:nth-child(even) td{
 	top: 10px;
 }
 
-.username .name {
+.name {
 	max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -309,12 +339,12 @@ table tr:nth-child(even) td{
 	white-space: nowrap;
 }
 
-.username .time {
+.time {
     font-size: 8px;
     opacity: 0.8;
 }
 
-.username .score {
+.score {
 	display: inline-block;
     background: #000;
     font-size: 8px;

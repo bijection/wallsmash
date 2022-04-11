@@ -794,6 +794,39 @@ function render(t, dt){
 
 window.swal = swal
 
+function goodScoreAchievement(username){
+    chat.push({
+        messsage: '[system] Reload if you see this',
+        username,
+        achievement: 'good_score',
+        score,
+        timestamp: firebase.database.ServerValue.TIMESTAMP    
+    })
+}
+
+
+function personalRecordAchievement(username){
+    chat.push({
+        messsage: '[system] Reload if you see this',
+        username,
+        achievement: 'personal_record',
+        score,
+        timestamp: firebase.database.ServerValue.TIMESTAMP    
+    })
+}
+
+window.personalRecordAchievement = personalRecordAchievement
+
+function weeklyScoreAchievement(username, place){
+    chat.push({
+        messsage: '[system] Reload if you see this',
+        username,
+        achievement: 'weekly_record',
+        score,
+        place,
+        timestamp: firebase.database.ServerValue.TIMESTAMP    
+    })
+}
 
 function gameLost(){
 
@@ -823,38 +856,43 @@ function gameLost(){
         }).then(username => {
             try{localStorage.username = username} catch(e) {}
             scores.push(score > 1e5 ? {username, score, check: (score%823)**2%823} : {username, score})
+            personalRecordAchievement(username)
             if(beatScore >= 0) {
                 weeklyScores.splice(beatScore, 0, {username, score})
                 updateScoreFeed()
+                weeklyScoreAchievement(username, beatScore)
+            } else if(score > 1e3) {
+                goodScoreAchievement(username)
             }
         }).catch(e => {
             console.warn(e)
         })
-    } else {
-        if(beatScore >= 0) 
-            swal({
-                title: "New high score!",
-                text: `You got the #${beatScore+1} score this week!\b`,
-                input: 'text',
-                inputPlaceholder: 'Nickname for Leaderboard',
-                inputValue: localStorage.username || "",
-                showCancelButton: true,
-                confirmButtonText: "Submit",
-                reverseButtons: true,
-                inputValidator: value => new Promise(
-                    (resolve, reject) => value 
-                        ? resolve()
-                        : reject('You need to write something!')
-                )
-            }).then(username => {
-                try{localStorage.username = username} catch(e) {}
-                scores.push({username, score})
-                weeklyScores.splice(beatScore, 0, {username, score})
-                updateScoreFeed()
-            }).catch(e => {
-                console.warn(e)
-            })
+    } else if(beatScore >= 0) {
+        swal({
+            title: "New high score!",
+            text: `You got the #${beatScore+1} score this week!\b`,
+            input: 'text',
+            inputPlaceholder: 'Nickname for Leaderboard',
+            inputValue: localStorage.username || "",
+            showCancelButton: true,
+            confirmButtonText: "Submit",
+            reverseButtons: true,
+            inputValidator: value => new Promise(
+                (resolve, reject) => value 
+                    ? resolve()
+                    : reject('You need to write something!')
+            )
+        }).then(username => {
+            try{localStorage.username = username} catch(e) {}
+            scores.push({username, score})
+            weeklyScores.splice(beatScore, 0, {username, score})
+            weeklyScoreAchievement(username, beatScore)
+            updateScoreFeed()
+        }).catch(e => {
+            console.warn(e)
+        })
     }
+
 
     const restart = e => {
         e.preventDefault()
