@@ -3,41 +3,55 @@ export default chat
 
 let missedMessages = 0
 
-const chat_toggle_button = document.getElementById('chat_toggle')
-let hidden = localStorage.chat_hidden === 'true'
 
-chat_toggle_button.addEventListener('click', e => {
-    hidden = !hidden
+function setup_toggle(buttonId, elementSelector, localstorageKey, buttonName, cb=()=>0){
+    const button = document.getElementById(buttonId)
+    let hidden = localStorage[localstorageKey] === 'true'
+
+    button.addEventListener('click', e => {
+        hidden = !hidden
+        hide_chat()
+    })
+
     hide_chat()
-})
 
-hide_chat()
+    function hide_chat(){
+        if(hidden) {
+            document.querySelector(elementSelector).classList.add('hidden')
+            button.innerText = 'Show '+buttonName
+            missedMessages = 0
+        } else {
+            document.querySelector(elementSelector).classList.remove('hidden')
+            button.innerText = 'Hide '+buttonName
+        }
 
-function hide_chat(){
-    if(hidden) {
-        document.querySelector('.chat').classList.add('hidden')
-        chat_toggle_button.innerText = 'Show Chat'
-        missedMessages = 0
-    } else {
-        document.querySelector('.chat').classList.remove('hidden')
-        chat_toggle_button.innerText = 'Hide Chat'
+        cb(hidden)
+
+        try{
+            localStorage[localstorageKey] = hidden
+        } catch(e){
+            console.warn(e)
+        }
     }
 
-    try{
-        localStorage.chat_hidden = hidden
-    } catch(e){
-        console.warn(e)
-    }
+    return () => hidden
 }
 
 const messages_el = document.querySelector('.messages')
+const chatHidden = setup_toggle('chat_toggle', '.chat', 'chat_hidden', 'Chat', hidden => {
+    messages_el.scrollTop = messages_el.scrollHeight
+})
+const headerHidden = setup_toggle('header_toggle', '#header', 'header_hidden', 'Header')
+
+
+
 
 chat.limitToLast(50).on('value', s => {
     messages_el.innerHTML = ''
 
     missedMessages++
         
-    if(hidden) chat_toggle_button.innerText = 'Show Chat (' + missedMessages + ')'
+    if(chatHidden()) document.getElementById('chat_toggle').innerText = 'Show Chat (' + missedMessages + ')'
 
     const now = Date.now()
 

@@ -60,6 +60,10 @@ h2 {
 	height: 75px;
 }
 
+#header.hidden {
+	display: none;
+}
+
 #headerLeft {
 	display:flex;
 	flex-direction: row;
