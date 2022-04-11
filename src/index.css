@@ -288,11 +288,13 @@ table tr:nth-child(even) td{
 	color: #ccc;
 
     border-top: 1px solid #444;
+	overflow: auto;
 }
 
 .achievement {
 	padding: 0 10px;
 	color: #ccc;
+	overflow: auto;
 }
 
 .achievement.diamond {
@@ -318,6 +320,11 @@ table tr:nth-child(even) td{
 .achievement.personal_record{
 	background: #2b523c;
 	color: #b2cbbd;
+}
+
+.achievement.weekly_record{
+    background: #000000;
+    color: #ffaff1;
 }
 
 .message-spacer {
