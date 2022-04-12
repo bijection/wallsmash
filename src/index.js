@@ -460,6 +460,36 @@ function draw_balls(){
     })
 }
 
+function draw_ball_counts(){
+    ctx.textBaseline = 'bottom'
+    ctx.font = '20px Avenir'
+    
+    const remainingBalls = ball_types.filter(t => t==='ball').length
+    const remainingLasers = ball_types.filter(t => t==='laser').length
+    const doneBalls = balls.filter(b=>b.gathered).map(b => b.type).filter(t => t==='ball').length
+    const doneLasers = next_ball_types.filter(b=>b==='laser').length - balls.filter(b=>!b.gathered).filter(b => b.type === 'laser').length
+
+    const drawtypes = (numBalls, numLasers, x) => {
+        ctx.textAlign = 'right'
+        ctx.fillStyle = NORMAL_COLOR
+        if(numBalls) ctx.fillText(
+            numBalls,
+            x - BALL_RADIUS,
+            canvas.height
+        )    
+        ctx.textAlign = 'left'
+        ctx.fillStyle = LASER_COLOR
+        if(numLasers) ctx.fillText(
+            numLasers,
+            x + BALL_RADIUS,
+            canvas.height
+        )    
+    }
+
+    if(ball_start_pos !== next_ball_start_pos) drawtypes(doneBalls, doneLasers, next_ball_start_pos || canvas.width / 2)
+    drawtypes(remainingBalls, remainingLasers, ball_start_pos || canvas.width / 2)
+}
+
 function draw_launcher(){
     const launcher_x = ball_start_pos || canvas.width / 2
     const launcher_y = getBottom() - BALL_RADIUS
@@ -758,6 +788,9 @@ function render(t, dt){
 
     draw_trails()
     draw_balls()
+    draw_ball_counts()
+    
+    
 
     if (game_state === 'aiming') {
         //if balls can be launched, display line between bottomcenter and mouse

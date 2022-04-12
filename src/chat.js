@@ -68,15 +68,22 @@ chat.limitToLast(50).on('value', s => {
             if(s.achievement) {
                 node.classList.add('achievement', s.achievement)
 
-                let score_level = s.score > 1e6 ? 'diamond'
-                    : s.score > 1e5 ? 'gold'
-                    : s.score > 1e4 ? 'silver'
+                const score_level = s.score > 100000 ? 'diamond'
+                    : s.score > 25000 ? 'gold'
+                    : s.score > 5000 ? 'silver'
                     : 'bronze'
+
+                const score_emoji = {
+                    diamond: '💎',
+                    gold: '🥇',
+                    silver: '🥈',
+                    bronze: '🥉',
+                }
 
                 if(s.achievement === 'good_score') node.classList.add(score_level)
 
                 node.innerText = s.achievement === 'good_score' 
-                    ? `[${score_level}] ${s.username} scored ${(+s.score).toLocaleString()}`
+                    ? `${score_emoji[score_level]} ${s.username} scored ${(+s.score).toLocaleString()}`
                     : s.achievement === 'personal_record' 
                     ? s.username + ' set a new personal record: ' + (+s.score).toLocaleString()
                     : s.achievement === 'weekly_record' 
