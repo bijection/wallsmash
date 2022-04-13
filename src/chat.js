@@ -4,9 +4,11 @@ export default chat
 let missedMessages = 0
 
 
-function setup_toggle(buttonId, elementSelector, localstorageKey, buttonName, cb=()=>0){
+function setup_toggle(buttonId, elementSelector, localstorageKey, buttonName, defaulthide=false, cb=()=>0){
     const button = document.getElementById(buttonId)
-    let hidden = localStorage[localstorageKey] === 'true'
+    let hidden = !localStorage[localstorageKey]
+        ? defaulthide
+        : localStorage[localstorageKey] === 'true'
 
     button.addEventListener('click', e => {
         hidden = !hidden
