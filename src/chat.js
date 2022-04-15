@@ -40,7 +40,7 @@ function setup_toggle(buttonId, elementSelector, localstorageKey, buttonName, de
 }
 
 const messages_el = document.querySelector('.messages')
-const chatHidden = setup_toggle('chat_toggle', '.chat', 'chat_hidden', 'Chat', hidden => {
+const chatHidden = setup_toggle('chat_toggle', '.chat', 'chat_hidden', 'Chat', true, hidden => {
     messages_el.scrollTop = messages_el.scrollHeight
 })
 const headerHidden = setup_toggle('header_toggle', '#header', 'header_hidden', 'Header')
