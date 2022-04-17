@@ -157,20 +157,53 @@ h2 {
 	margin-right: 10px;
 }
 
-#score-wrap {
-	padding-left: 10px;
-}
-
 #scoreInfo {
 	display: flex;
 	align-items: center;
+}
+
+#scoreInfo > * {
+	padding-left: 10px;
+}
+
+.score-line {
+	white-space: nowrap;
 }
 
 #score {
 	/*transition: .5s;*/
 	font-size: 150%;
 	padding-left: 5px;
-	padding-right: 10px;
+}
+
+#score-title {
+	display: inline-block;
+}
+
+#hit-multiplier-wrap {
+	opacity: 0;
+	transition: .2s;
+}
+
+#hit-multiplier-title {
+	font-size: .7rem;
+	display: inline-block;
+}
+
+#hit-multiplier {
+	font-size: .7rem;
+}
+
+#hit-multiplier > *:after {
+	content: 'x';
+}
+
+#hit-multiplier-balls {
+	color: #9dc0ff;
+}
+
+#hit-multiplier-lasers {
+	color: #de85f7;
 }
 
 #username {

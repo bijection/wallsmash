@@ -104,6 +104,11 @@ function updateCellsForCurrentLevel() {
     }
 }
 
+let levelHitsBalls = 0;
+let levelHitsLasers = 0;
+let levelTotalBalls = 0;
+let levelTotalLasers = 0;
+
 function tick(t){
     frame_number++
     const dt = (t - last) / 1000
@@ -226,7 +231,7 @@ function tick(t){
                                     color: 'rgba(' + gradient('progress', n / 125) + ',1)'
                                 })
                                 cell[2]--
-                                incrementScore()
+                                incrementLaserScore()
                             }
 
                         })
@@ -280,6 +285,8 @@ function tick(t){
                 //potentially set game_state to 'lost'
                 game_state='levelup'
                 last_level_end = t
+                levelHitsBalls = 0;
+                levelHitsLasers = 0;
                 updateCellsForCurrentLevel()
             }
         }
@@ -312,6 +319,12 @@ function shoot() {
         balls = []
         game_state = 'playing'
         end_button.style.opacity=1
+
+        levelTotalLasers = next_ball_types.filter(type => type === 'laser').length;
+        levelTotalBalls = next_ball_types.filter(type => type === 'ball').length;
+        hitMultiplierWrap.style.opacity = 1;
+        hitMultiplierBalls.innerText = '0.00';
+        hitMultiplierLasers.innerText = '0.00';
     }
 }
 
@@ -348,6 +361,9 @@ end_button.addEventListener('click', e => {
         ball.falling = true
     })
 })
+const hitMultiplierWrap = document.getElementById('hit-multiplier-wrap');
+const hitMultiplierBalls = document.getElementById('hit-multiplier-balls');
+const hitMultiplierLasers = document.getElementById('hit-multiplier-lasers');
 
 const username_input = document.querySelector('.compose input')
 const username = localStorage.username || 'anon_' + Math.floor(1000 + Math.random()*1000)
@@ -1007,6 +1023,24 @@ function update_particles(dt){
     particles = new_particles
 }
 
+function incrementBallsScore(amount) {
+    levelHitsBalls+= amount;
+
+    hitMultiplierBalls.innerText = (levelHitsBalls / levelTotalBalls).toFixed(2);
+
+    incrementScore(amount);
+}
+
+function incrementLaserScore() {
+    levelHitsLasers++;
+
+    if (levelTotalLasers) {
+        hitMultiplierLasers.innerText = (levelHitsLasers / levelTotalLasers).toFixed(2);
+    }
+
+    incrementScore();
+}
+
 function incrementScore(amount=1){
     score += amount
 
@@ -1249,7 +1283,7 @@ function move_and_collide_ball(ball,dt){
                     mincell[2]--
                 }
 
-                incrementScore(hits)
+                incrementBallsScore(hits)
 
 
 
