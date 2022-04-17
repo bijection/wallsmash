@@ -49,7 +49,7 @@ let items = new Set()
 
 function startGame(){
     game_state = 'aiming'
-    
+
     currentLevel = 5
     // next_ball_types = Array.from(new Array(currentLevel-1), () => Math.random() > .7 ? 'laser':'ball')
     next_ball_types = Array.from(new Array(currentLevel-1), () => 'ball')
@@ -119,7 +119,7 @@ function tick(t){
     //     canvas.height = innerHeight * 1.5
     // }
     const {width, height} = document.getElementById('canvas-wrap').getBoundingClientRect()
-    
+
     canvas.width = width * 2
     canvas.height = height * 2
 
@@ -130,10 +130,7 @@ function tick(t){
     update_particles(dt)
     render(t, dt)
 
-
-
     if(game_state === 'playing'){
-
         if(ball_types.length) {
 
 
@@ -184,7 +181,7 @@ function tick(t){
 
                     const start = [x, y]
                     const vx = Math.cos(launch_angle) * (canvas.width + canvas.height)
-                    const vy = -Math.sin(launch_angle) * (canvas.width + canvas.height) 
+                    const vy = -Math.sin(launch_angle) * (canvas.width + canvas.height)
                     const end = [x+vx, y+vy]
 
 
@@ -204,7 +201,7 @@ function tick(t){
 
                         if(!hit) return;
 
-                        
+
                         const {x,y,w,h} = rect
                         const segs = [
                             [[x, y], [x + w, y]],
@@ -212,7 +209,7 @@ function tick(t){
                             [[x + w, y + h], [x, y + h]],
                             [[x, y + h], [x, y ]],
                         ]
-                    
+
                         segs.forEach(s => {
 
                             const hit = intersection(start, [vx,vy], s[0], minus(s[1], s[0]))
@@ -240,7 +237,7 @@ function tick(t){
                         y,
                         toX: end[0],
                         toY: end[1],
-                        r: 1, 
+                        r: 1,
                         vr: 150,
                         fade: true,
                         color: '#aaf',
@@ -252,7 +249,7 @@ function tick(t){
                         y,
                         toX: end[0],
                         toY: end[1],
-                        r: 2, 
+                        r: 2,
                         // vr: -350,
                         fade: true,
                         color: LASER_COLOR,
@@ -372,7 +369,7 @@ document.querySelector('.compose textarea').addEventListener('keypress', e=> {
     if(e.key === 'Enter' && !e.shiftKey && e.target.value.trim() !== '') {
         e.preventDefault()
         chat.push({
-            message: e.target.value, 
+            message: e.target.value,
             username: username_input.value,
             score,
             timestamp: firebase.database.ServerValue.TIMESTAMP
@@ -463,7 +460,7 @@ function draw_balls(){
 function draw_ball_counts(){
     ctx.textBaseline = 'bottom'
     ctx.font = '20px Avenir'
-    
+
     const remainingBalls = ball_types.filter(t => t==='ball').length
     const remainingLasers = ball_types.filter(t => t==='laser').length
     const doneBalls = balls.filter(b=>b.gathered).map(b => b.type).filter(t => t==='ball').length
@@ -476,14 +473,14 @@ function draw_ball_counts(){
             numBalls,
             x - BALL_RADIUS,
             canvas.height
-        )    
+        )
         ctx.textAlign = 'left'
         ctx.fillStyle = LASER_COLOR
         if(numLasers) ctx.fillText(
             numLasers,
             x + BALL_RADIUS,
             canvas.height
-        )    
+        )
     }
 
     if(ball_start_pos !== next_ball_start_pos) drawtypes(doneBalls, doneLasers, next_ball_start_pos || canvas.width / 2)
@@ -538,7 +535,7 @@ function draw_cell(cell, bang){
     if(num <= 0) return;
 
     const { w,h, x,y, cx, cy} = get_cell_rect(r,c)
-    
+
     const bx = bang ? (Math.random() - .5)*10 : 0
     const by = bang ? (Math.random() - .5)*10 : 0
 
@@ -677,7 +674,7 @@ function draw_particles(){
 
         if(colormap) {
             color = 'rgba(' + gradient(colormap, 1-alpha) + ',1)'
-        } 
+        }
 
         if(color) {
             ctx.fillStyle = color
@@ -728,7 +725,7 @@ function draw_lost_screen(){
 
     ctx.fillStyle = '#f0f0f0'
     ctx.fillText(sadmessage[Math.floor(Date.now() / 1500) % sadmessage.length], canvas.width / 2, canvas.height / 2)
-    
+
     ctx.font =  '30px Avenir'
     ctx.fillText('[tap to restart]', canvas.width / 2, canvas.height / 2 +text_size/2+20)
 }
@@ -761,7 +758,7 @@ function draw_background(r, t){
         }
 
         ctx.fillStyle = grad;
-        ctx.fillRect(0,0,canvas.width,canvas.height);        
+        ctx.fillRect(0,0,canvas.width,canvas.height);
     }
     ctx.restore()
 }
@@ -789,8 +786,8 @@ function render(t, dt){
     draw_trails()
     draw_balls()
     draw_ball_counts()
-    
-    
+
+
 
     if (game_state === 'aiming') {
         //if balls can be launched, display line between bottomcenter and mouse
@@ -799,7 +796,7 @@ function render(t, dt){
 
     if(game_state == 'levelup'){
         draw_launcher()
-        
+
         // if(r < 1) ctx.translate(0, total * (1-ease(r)))
         if(r < 1) ctx.translate(0, total * (1-r))
         else {
@@ -833,7 +830,7 @@ function goodScoreAchievement(username){
         username,
         achievement: 'good_score',
         score,
-        timestamp: firebase.database.ServerValue.TIMESTAMP    
+        timestamp: firebase.database.ServerValue.TIMESTAMP
     })
 }
 
@@ -844,7 +841,7 @@ function personalRecordAchievement(username){
         username,
         achievement: 'personal_record',
         score,
-        timestamp: firebase.database.ServerValue.TIMESTAMP    
+        timestamp: firebase.database.ServerValue.TIMESTAMP
     })
 }
 
@@ -857,7 +854,7 @@ function weeklyScoreAchievement(username, place){
         achievement: 'weekly_record',
         score,
         place,
-        timestamp: firebase.database.ServerValue.TIMESTAMP    
+        timestamp: firebase.database.ServerValue.TIMESTAMP
     })
 }
 
@@ -882,7 +879,7 @@ function gameLost(){
             confirmButtonText: "Submit",
             reverseButtons: true,
             inputValidator: value => new Promise(
-                (resolve, reject) => value 
+                (resolve, reject) => value
                     ? resolve()
                     : reject('You need to write something!')
             )
@@ -911,7 +908,7 @@ function gameLost(){
             confirmButtonText: "Submit",
             reverseButtons: true,
             inputValidator: value => new Promise(
-                (resolve, reject) => value 
+                (resolve, reject) => value
                     ? resolve()
                     : reject('You need to write something!')
             )
@@ -1021,7 +1018,7 @@ function incrementScore(amount=1){
     setTimeout(() => {
         scoreSpan.style.transition = '1s'
         scoreSpan.className = ''
-    }, 0)   
+    }, 0)
 }
 
 
@@ -1036,10 +1033,10 @@ function move_and_collide_ball(ball,dt){
 
         const [vx,vy] = unit([ball.vx, ball.vy])
         const inv = [1/vx, 1/vy]
-        
+
         const start = [ball.x, ball.y]
         const end = [ball.x + vx * distance_left, ball.y + vy * distance_left]
-        
+
         if(isNaN(end[0])) throw 'walp'
 
         let mind = Infinity
@@ -1200,7 +1197,7 @@ function move_and_collide_ball(ball,dt){
 
             const bounce = dot(minus(end, start), normal)
             const newv = scale(unit(minus(minus(end, start), scale(normal, 2*bounce))), v)
-            
+
 
             // const d = dist(end, start) -
 
@@ -1236,7 +1233,7 @@ function move_and_collide_ball(ball,dt){
 
                 for (var i = 0; i < hits; i++) {
                     const pv = scale(unit(minus(minus(end, start), scale(normal, (1+Math.random())*bounce))), v*Math.random())
-                    
+
                     addParticle({
                         vx: pv[0],
                         vy: pv[1],
@@ -1336,22 +1333,22 @@ function box_ray_intersection(b, [x, y], [invx, invy], length) {
     const tx2 = (b.x + b.w - x)*invx;
 
     // console.log(tx1, tx2)
- 
+
     let tmin = Math.min(tx1, tx2);
     let tmax = Math.max(tx1, tx2);
- 
+
     // console.log(tmin, tmax)
- 
+
 
     const ty1 = (b.y - y)*invy;
     const ty2 = (b.y + b.h - y)*invy;
- 
+
     // console.log(ty1, ty2)
 
 
     tmin = Math.max(tmin, Math.min(ty1, ty2));
     tmax = Math.min(tmax, Math.max(ty1, ty2));
- 
+
     // console.log(tmin, tmax)
 
     return tmax > Math.max(tmin, 0) && tmin < length
@@ -1390,7 +1387,7 @@ const dot = ([x1, y1], [x2, y2]) => x1 * x2 + y1 * y2
 const equal = ([x1, y1], [x2, y2]) => Math.abs(x1 - x2) < 1e-8 && Math.abs(y1 - y2) < 1e-8
 
 // const ease = t => (.04 - .04 / t) * Math.sin(25 * t) + 1
-// const ease = t => t<.5 ? 16*t*t*t*t*t : 1+16*(--t)*t*t*t*t 
+// const ease = t => t<.5 ? 16*t*t*t*t*t : 1+16*(--t)*t*t*t*t
 
 
 

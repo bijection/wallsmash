@@ -84,7 +84,7 @@ h2 {
 
 #scoreboardButton{
 	padding: 0 10px;
-	cursor:pointer;	
+	cursor:pointer;
 }
 
 #scoreTable {
@@ -216,7 +216,7 @@ table tr:nth-child(even) td{
 */
 .achievements {
     position: absolute;
-    
+
     right: 0;
     bottom: 0;
     padding: 10px;
