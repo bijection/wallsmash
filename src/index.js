@@ -322,7 +322,6 @@ function shoot() {
 
         levelTotalLasers = next_ball_types.filter(type => type === 'laser').length;
         levelTotalBalls = next_ball_types.filter(type => type === 'ball').length;
-        hitMultiplierWrap.style.opacity = 1;
         hitMultiplierBalls.innerText = '0.00';
         hitMultiplierLasers.innerText = '0.00';
     }
@@ -361,7 +360,6 @@ end_button.addEventListener('click', e => {
         ball.falling = true
     })
 })
-const hitMultiplierWrap = document.getElementById('hit-multiplier-wrap');
 const hitMultiplierBalls = document.getElementById('hit-multiplier-balls');
 const hitMultiplierLasers = document.getElementById('hit-multiplier-lasers');
 

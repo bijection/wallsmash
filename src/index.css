@@ -180,11 +180,6 @@ h2 {
 	display: inline-block;
 }
 
-#hit-multiplier-wrap {
-	opacity: 0;
-	transition: .2s;
-}
-
 #hit-multiplier-title {
 	font-size: .7rem;
 	display: inline-block;
