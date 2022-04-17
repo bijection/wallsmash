@@ -4,10 +4,10 @@ Just about the best game ever.
 
 By [Guillermo Webster][gw], [Kenny Friedman][kf], [Colin McDonnell][cm].
 
-Currently available for preview here: [GKC Breakr][breakr].
+Currently available for preview here: [WallSmash][wallsmash].
 
 [gw]: http://omrelli.ug
 [kf]: http://kennethfriedman.org/
 [cm]: http://mcdonnell.mit.edu/
 
-[breakr]: http://apoplectic.tech/breakr/
+[wallsmash]: https://wallsmash.com/
